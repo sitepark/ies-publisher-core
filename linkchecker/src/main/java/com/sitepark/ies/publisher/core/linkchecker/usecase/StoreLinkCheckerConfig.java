@@ -5,6 +5,7 @@ import com.sitepark.ies.publisher.core.linkchecker.domain.exception.AccessDenied
 import com.sitepark.ies.publisher.core.linkchecker.port.AccessControl;
 import com.sitepark.ies.publisher.core.linkchecker.port.LinkCheckerConfigStore;
 import com.sitepark.ies.publisher.core.linkchecker.port.LinkCheckerScheduler;
+import com.sitepark.ies.publisher.core.linkchecker.port.PublishedExternalLinkRepository;
 import jakarta.inject.Inject;
 
 public class StoreLinkCheckerConfig {
@@ -15,14 +16,18 @@ public class StoreLinkCheckerConfig {
 
   private final LinkCheckerScheduler linkCheckerScheduler;
 
+  private final PublishedExternalLinkRepository publishedExternalLinkRepository;
+
   @Inject
   public StoreLinkCheckerConfig(
       AccessControl accessControl,
       LinkCheckerConfigStore linkCheckerConfigStore,
-      LinkCheckerScheduler linkCheckerScheduler) {
+      LinkCheckerScheduler linkCheckerScheduler,
+      PublishedExternalLinkRepository publishedExternalLinkRepository) {
     this.accessControl = accessControl;
     this.linkCheckerConfigStore = linkCheckerConfigStore;
     this.linkCheckerScheduler = linkCheckerScheduler;
+    this.publishedExternalLinkRepository = publishedExternalLinkRepository;
   }
 
   public void store(LinkCheckerConfig config) {
@@ -31,7 +36,13 @@ public class StoreLinkCheckerConfig {
       throw new AccessDeniedException("Not allowed to store link checker config");
     }
 
+    LinkCheckerConfig oldConfig = this.linkCheckerConfigStore.get();
+
     this.linkCheckerConfigStore.store(config);
+    if (!config.isEnabled() && oldConfig.isEnabled()) {
+      this.publishedExternalLinkRepository.resetResults();
+    }
+
     this.linkCheckerScheduler.configChanged();
   }
 }

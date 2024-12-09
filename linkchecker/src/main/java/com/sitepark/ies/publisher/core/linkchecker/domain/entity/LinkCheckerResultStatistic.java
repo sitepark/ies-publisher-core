@@ -1,12 +1,14 @@
 package com.sitepark.ies.publisher.core.linkchecker.domain.entity;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-public class LinkCheckerResultStatistic {
+@JsonDeserialize(builder = LinkCheckerResultStatistic.Builder.class)
+public final class LinkCheckerResultStatistic {
 
   private final List<StatusTypeCount> statusCounts;
 

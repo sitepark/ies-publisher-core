@@ -7,7 +7,7 @@ import java.time.LocalTime;
 import java.util.Objects;
 
 @JsonDeserialize(builder = DailyScheduling.Builder.class)
-public class DailyScheduling implements Scheduling {
+public final class DailyScheduling implements Scheduling {
 
   private final LocalTime startTime;
 
@@ -46,6 +46,11 @@ public class DailyScheduling implements Scheduling {
     }
 
     return Objects.equals(this.startTime, that.startTime);
+  }
+
+  @Override
+  public String toString() {
+    return "DailyScheduling [startTime=" + startTime + "]";
   }
 
   @JsonPOJOBuilder(withPrefix = "", buildMethodName = "build")

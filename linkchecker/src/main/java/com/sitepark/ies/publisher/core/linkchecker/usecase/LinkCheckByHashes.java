@@ -5,6 +5,7 @@ import com.sitepark.ies.publisher.core.linkchecker.domain.entity.LinkCheckerLink
 import com.sitepark.ies.publisher.core.linkchecker.domain.entity.LinkCheckerResultItem;
 import com.sitepark.ies.publisher.core.linkchecker.domain.entity.StatusType;
 import com.sitepark.ies.publisher.core.linkchecker.domain.exception.AccessDeniedException;
+import com.sitepark.ies.publisher.core.linkchecker.domain.exception.LinkCheckerDisabledException;
 import com.sitepark.ies.publisher.core.linkchecker.domain.exception.LinkCheckerException;
 import com.sitepark.ies.publisher.core.linkchecker.port.AccessControl;
 import com.sitepark.ies.publisher.core.linkchecker.port.LinkChecker;
@@ -48,6 +49,9 @@ public class LinkCheckByHashes {
     }
 
     LinkCheckerConfig config = this.linkCheckerConfigStore.get();
+    if (!config.isEnabled()) {
+      throw new LinkCheckerDisabledException("Link checker is disabled");
+    }
 
     LinkCheckerExcludesPatternMatcher linkCheckerExcludesPatternMatcher =
         new LinkCheckerExcludesPatternMatcher(config.getExcludes());

@@ -1,8 +1,11 @@
 package com.sitepark.ies.publisher.core.linkchecker.domain.entity;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
 import java.util.Objects;
 
-public class LinkCheckerLink {
+@JsonDeserialize(builder = LinkCheckerLink.Builder.class)
+public final class LinkCheckerLink {
 
   private final String hash;
 
@@ -38,7 +41,7 @@ public class LinkCheckerLink {
 
   @Override
   public int hashCode() {
-    return Objects.hash(this.hash, this.url);
+    return Objects.hash(this.hash, this.url, this.timeout);
   }
 
   @Override
@@ -48,9 +51,17 @@ public class LinkCheckerLink {
       return false;
     }
 
-    return Objects.equals(this.hash, that.hash) && Objects.equals(this.url, that.url);
+    return Objects.equals(this.hash, that.hash)
+        && Objects.equals(this.url, that.url)
+        && Objects.equals(this.timeout, that.timeout);
   }
 
+  @Override
+  public String toString() {
+    return "LinkCheckerLink [hash=" + hash + ", url=" + url + ", timeout=" + timeout + "]";
+  }
+
+  @JsonPOJOBuilder(withPrefix = "", buildMethodName = "build")
   public static class Builder {
 
     private String hash;

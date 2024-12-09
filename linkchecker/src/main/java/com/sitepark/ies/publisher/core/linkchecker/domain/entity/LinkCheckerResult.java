@@ -1,11 +1,14 @@
 package com.sitepark.ies.publisher.core.linkchecker.domain.entity;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-public class LinkCheckerResult {
+@JsonDeserialize(builder = LinkCheckerResult.Builder.class)
+public final class LinkCheckerResult {
 
   private final List<LinkCheckerResultItem> items;
 
@@ -75,6 +78,7 @@ public class LinkCheckerResult {
         + "]";
   }
 
+  @JsonPOJOBuilder(withPrefix = "", buildMethodName = "build")
   public static class Builder {
 
     private final List<LinkCheckerResultItem> items = new ArrayList<>();

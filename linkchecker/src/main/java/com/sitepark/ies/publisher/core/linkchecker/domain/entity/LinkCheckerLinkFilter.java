@@ -1,5 +1,7 @@
 package com.sitepark.ies.publisher.core.linkchecker.domain.entity;
 
+import com.fasterxml.jackson.annotation.JsonSetter;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -7,7 +9,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-public class LinkCheckerLinkFilter {
+@JsonDeserialize(builder = LinkCheckerLinkFilter.Builder.class)
+public final class LinkCheckerLinkFilter {
 
   private final List<String> terms;
 
@@ -73,6 +76,7 @@ public class LinkCheckerLinkFilter {
       this.statusTypes.addAll(instance.statusTypes);
     }
 
+    @JsonSetter
     public Builder terms(Collection<String> terms) {
       Objects.requireNonNull(terms, "terms is null");
       this.terms.clear();

@@ -31,8 +31,10 @@ public class LinkCheckerExcludesPatternMatcher {
         return this.matchContains(url, pattern.pattern());
       case LinkCheckerExcludePatternType.GLOB:
         return this.matchGlob(url, pattern.pattern());
+      case LinkCheckerExcludePatternType.EXACT:
+        return this.matchExact(url, pattern.pattern());
     }
-    return true;
+    throw new IllegalArgumentException("Unsupported pattern type: " + pattern.type());
   }
 
   private boolean matchRegex(String url, String pattern) {
@@ -40,12 +42,16 @@ public class LinkCheckerExcludesPatternMatcher {
   }
 
   private boolean matchContains(String url, String pattern) {
-    return url.indexOf("pattern") != -1;
+    return url.indexOf(pattern) != -1;
   }
 
   private boolean matchGlob(String url, String pattern) {
     PathMatcher pathMatcher =
         java.nio.file.FileSystems.getDefault().getPathMatcher("glob:" + pattern);
     return pathMatcher.matches(java.nio.file.Paths.get(url));
+  }
+
+  private boolean matchExact(String url, String pattern) {
+    return url.equals(pattern);
   }
 }

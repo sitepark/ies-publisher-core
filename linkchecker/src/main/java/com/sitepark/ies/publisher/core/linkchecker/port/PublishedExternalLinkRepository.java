@@ -16,6 +16,8 @@ public interface PublishedExternalLinkRepository {
 
   List<LinkCheckerLink> getLinks(Collection<String> hashes);
 
+  List<LinkCheckerLink> getLinks(LinkCheckerLinkFilter filter);
+
   LinkCheckerResult getCheckResult(LinkCheckerLinkFilter filter, int start, int limit);
 
   LinkCheckerResultStatistic getCheckResultsStatistic();
@@ -23,4 +25,6 @@ public interface PublishedExternalLinkRepository {
   void updateCheckResult(String hash, LinkCheckerResultItem result);
 
   void cleanupUnusedLinks();
+
+  void resetResults();
 }

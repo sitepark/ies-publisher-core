@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 
-public class LinkCheckerBackgroundExecution {
+public final class LinkCheckerBackgroundExecution {
 
   private final int parallel;
 
@@ -44,7 +44,7 @@ public class LinkCheckerBackgroundExecution {
 
   @Override
   public final int hashCode() {
-    return Objects.hash(Arrays.hashCode(this.topic));
+    return Objects.hash(this.parallel, Arrays.hashCode(this.topic), this.links, this.operation);
   }
 
   @Override
@@ -54,21 +54,31 @@ public class LinkCheckerBackgroundExecution {
       return false;
     }
 
-    return Arrays.equals(this.topic, that.topic);
+    return Arrays.equals(this.topic, that.topic)
+        && this.parallel == that.parallel
+        && Objects.equals(this.links, that.links)
+        && Objects.equals(this.operation, that.operation);
   }
 
   @Override
   public String toString() {
-    StringBuilder b =
-        new StringBuilder(100)
-            .append("EntityBackgroundExecution[topic:")
-            .append(Arrays.toString(this.topic))
-            .append(']');
-    return b.toString();
+    return "LinkCheckerBackgroundExecution [parallel="
+        + parallel
+        + ", topic="
+        + Arrays.toString(topic)
+        + ", links="
+        + links
+        + ", operation="
+        + operation
+        + "]";
   }
 
   public static Builder builder() {
     return new Builder();
+  }
+
+  public Builder toBuilder() {
+    return new Builder(this);
   }
 
   public static class Builder {
@@ -82,6 +92,13 @@ public class LinkCheckerBackgroundExecution {
     private Consumer<LinkCheckerLink> operation;
 
     private Builder() {}
+
+    private Builder(LinkCheckerBackgroundExecution instance) {
+      this.parallel = instance.parallel;
+      this.topic = instance.topic;
+      this.links.addAll(instance.links);
+      this.operation = instance.operation;
+    }
 
     public Builder parallel(int parallel) {
       this.parallel = parallel;

@@ -10,6 +10,8 @@ import java.util.Objects;
 @JsonDeserialize(builder = LinkCheckerConfig.Builder.class)
 public final class LinkCheckerConfig {
 
+  private final boolean enabled;
+
   private final int parallel;
 
   private final int timeout;
@@ -19,10 +21,15 @@ public final class LinkCheckerConfig {
   private final List<LinkCheckerExcludePattern> excludes;
 
   protected LinkCheckerConfig(Builder builder) {
+    this.enabled = builder.enabled;
     this.parallel = builder.parallel;
     this.timeout = builder.timeout;
     this.scheduling = builder.scheduling;
     this.excludes = builder.excludes;
+  }
+
+  public boolean isEnabled() {
+    return this.enabled;
   }
 
   public int getParallel() {
@@ -51,7 +58,7 @@ public final class LinkCheckerConfig {
 
   @Override
   public int hashCode() {
-    return Objects.hash(this.timeout, this.parallel, this.scheduling, this.excludes);
+    return Objects.hash(this.enabled, this.timeout, this.parallel, this.scheduling, this.excludes);
   }
 
   @Override
@@ -61,14 +68,32 @@ public final class LinkCheckerConfig {
       return false;
     }
 
-    return Objects.equals(this.timeout, that.timeout)
+    return Objects.equals(this.enabled, that.enabled)
+        && Objects.equals(this.timeout, that.timeout)
         && Objects.equals(this.parallel, that.parallel)
         && Objects.equals(this.scheduling, that.scheduling)
         && Objects.equals(this.excludes, that.excludes);
   }
 
+  @Override
+  public String toString() {
+    return "LinkCheckerConfig [enabled="
+        + enabled
+        + ", parallel="
+        + parallel
+        + ", timeout="
+        + timeout
+        + ", scheduling="
+        + scheduling
+        + ", excludes="
+        + excludes
+        + "]";
+  }
+
   @JsonPOJOBuilder(withPrefix = "", buildMethodName = "build")
   public static class Builder {
+
+    private boolean enabled;
 
     private int parallel;
 
@@ -81,8 +106,16 @@ public final class LinkCheckerConfig {
     protected Builder() {}
 
     protected Builder(LinkCheckerConfig instance) {
+      this.enabled = instance.enabled;
+      this.parallel = instance.parallel;
       this.timeout = instance.timeout;
       this.excludes.addAll(instance.excludes);
+      this.scheduling = instance.scheduling;
+    }
+
+    public Builder enabled(boolean enabled) {
+      this.enabled = enabled;
+      return this;
     }
 
     public Builder scheduling(Scheduling scheduling) {

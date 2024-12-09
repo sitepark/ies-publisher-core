@@ -1,7 +1,10 @@
 package com.sitepark.ies.publisher.core.linkchecker.domain.entity;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
 import java.util.Objects;
 
+@JsonDeserialize(builder = PublishedExternalLink.Builder.class)
 public final class PublishedExternalLink {
 
   private final String entity;
@@ -61,6 +64,20 @@ public final class PublishedExternalLink {
         && Objects.equals(this.url, that.url);
   }
 
+  @Override
+  public String toString() {
+    return "PublishedExternalLink [entity="
+        + entity
+        + ", channel="
+        + channel
+        + ", section="
+        + section
+        + ", url="
+        + url
+        + "]";
+  }
+
+  @JsonPOJOBuilder(withPrefix = "", buildMethodName = "build")
   public static class Builder {
 
     private String entity;
