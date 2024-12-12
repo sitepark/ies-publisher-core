@@ -34,6 +34,8 @@ class StoreLinkCheckerConfigTest {
     LinkCheckerConfigStore linkCheckerConfigStore = mock();
     LinkCheckerScheduler linkCheckerScheduler = mock();
     LinkCheckerConfig config = mock();
+    when(linkCheckerConfigStore.get()).thenReturn(config);
+    when(config.isEnabled()).thenReturn(true);
     PublishedExternalLinkRepository publishedExternalLinkRepository = mock();
 
     StoreLinkCheckerConfig useCase =

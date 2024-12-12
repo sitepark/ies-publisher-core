@@ -46,6 +46,7 @@ class BackgroundLinkCheckTest {
     LinkCheckerConfigStore linkCheckerConfigStore = mock();
     LinkCheckerConfig config =
         LinkCheckerConfig.builder()
+            .enabled(true)
             .exclude(new LinkCheckerExcludePattern(LinkCheckerExcludePatternType.CONTAINS, "test"))
             .parallel(1)
             .build();

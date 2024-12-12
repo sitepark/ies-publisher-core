@@ -95,6 +95,7 @@ class LinkCheckerConfigTest {
 
     LinkCheckerConfig config =
         LinkCheckerConfig.builder()
+            .enabled(true)
             .parallel(3)
             .timeout(10)
             .scheduling(DailyScheduling.builder().startTime(3, 0).build())
@@ -104,7 +105,7 @@ class LinkCheckerConfigTest {
     String json = mapper.writeValueAsString(config);
 
     assertEquals(
-        "{\"parallel\":3,\"timeout\":10,\"scheduling\":{\"startTime\":\"03:00\",\"type\":\"daily\"},\"excludes\":[{\"type\":\"REGEX\",\"pattern\":\".*\\\\.pdf\"}]}",
+        "{\"enabled\":true,\"parallel\":3,\"timeout\":10,\"scheduling\":{\"startTime\":\"03:00\",\"type\":\"daily\"},\"excludes\":[{\"type\":\"REGEX\",\"pattern\":\".*\\\\.pdf\"}]}",
         json,
         "Unexpected JSON output");
   }
