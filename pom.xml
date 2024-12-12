@@ -7,7 +7,7 @@
 	<version>1.0.0-SNAPSHOT</version>
 	<packaging>pom</packaging>
 	<name>IES Publisher Core</name>
-	<description>IES publisher domain und use-case implementations</description>
+	<description>IES publisher domain and use-case implementations</description>
 	<url>https://github.com/sitepark/ies-publisher-core</url>
 
 	<organization>
