@@ -4,7 +4,7 @@
 
 	<groupId>com.sitepark.ies</groupId>
 	<artifactId>ies-publisher-core</artifactId>
-	<version>1.0.0</version>
+	<version>1.1.0-SNAPSHOT</version>
 	<packaging>pom</packaging>
 	<name>IES Publisher Core</name>
 	<description>IES publisher domain and use-case implementations</description>
@@ -44,7 +44,7 @@
 	<scm>
 		<connection>scm:git:git@github.com:sitepark/ies-publisher-core.git</connection>
 		<developerConnection>scm:git:git@github.com:sitepark/ies-publisher-core.git</developerConnection>
-		<tag>1.0.0</tag>
+		<tag>HEAD</tag>
 		<url>https://github.com/sitepark/ies-publisher-core</url>
 	</scm>
 
@@ -235,7 +235,7 @@
 						</goals>
 						<configuration>
 							<rules>
-								<banDuplicatePomDependencyVersions />
+								<banDuplicatePomDependencyVersions></banDuplicatePomDependencyVersions>
 								<requireMavenVersion>
 									<version>3.8</version>
 								</requireMavenVersion>
@@ -257,7 +257,7 @@
 									<failWhenParentIsSnapshot>false</failWhenParentIsSnapshot>
 									<message>No Snapshots Allowed!</message>
 								</requireReleaseDeps>
-								<requireReleaseDepsInPlugins implementation="org.apache.maven.enforcer.rule.requireReleaseDepsInPlugins" />
+								<requireReleaseDepsInPlugins implementation="org.apache.maven.enforcer.rule.requireReleaseDepsInPlugins"></requireReleaseDepsInPlugins>
 							</rules>
 							<fail>true</fail>
 						</configuration>
@@ -321,7 +321,7 @@
 							<reflowLongStrings>true</reflowLongStrings>
 							<formatJavadoc>false</formatJavadoc>
 						</googleJavaFormat>
-						<formatAnnotations />
+						<formatAnnotations></formatAnnotations>
 					</java>
 					<pom>
 						<!-- These are the defaults, you can override if you want -->
