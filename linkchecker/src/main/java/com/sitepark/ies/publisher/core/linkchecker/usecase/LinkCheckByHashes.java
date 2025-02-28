@@ -44,56 +44,78 @@ public class LinkCheckByHashes {
   /** Check the links whose hashes have been specified */
   public List<LinkCheckerResultItem> linkCheckByHashes(Collection<String> hashes) {
 
-    if (!this.accessControl.isAllowRunLinkChecker()) {
-      throw new AccessDeniedException("Not allowed to run link checker");
-    }
+    checkAccess();
 
-    LinkCheckerConfig config = this.linkCheckerConfigStore.get();
-    if (!config.isEnabled()) {
-      throw new LinkCheckerDisabledException("Link checker is disabled");
-    }
+    LinkCheckerConfig config = getConfig();
 
     LinkCheckerExcludesPatternMatcher linkCheckerExcludesPatternMatcher =
         new LinkCheckerExcludesPatternMatcher(config.getExcludes());
 
     List<LinkCheckerLink> linksToCheck = this.publishedExternalLinkRepository.getLinks(hashes);
 
-    ExecutorService executorService = Executors.newFixedThreadPool(config.getParallel());
-    List<LinkCheckerResultItem> resultList = Collections.synchronizedList(new ArrayList<>());
-    List<CompletableFuture<Void>> futures = new ArrayList<>();
+    try (ExecutorService executorService = Executors.newFixedThreadPool(config.getParallel())) {
 
-    for (LinkCheckerLink link : linksToCheck) {
-      CompletableFuture<Void> future =
-          CompletableFuture.runAsync(
-              () -> {
-                if (linkCheckerExcludesPatternMatcher.isExcluded(link.getUrl())) {
-                  this.publishedExternalLinkRepository.updateCheckResult(
-                      link.getHash(),
-                      LinkCheckerResultItem.builder().status(StatusType.IGNORED).build());
-                  return;
-                }
-                LinkCheckerLink linkWithTimeout =
-                    link.toBuilder().timeout(config.getTimeout()).build();
-                LinkCheckerResultItem result = this.linkChecker.checkLink(linkWithTimeout);
-                this.publishedExternalLinkRepository.updateCheckResult(
-                    linkWithTimeout.getHash(), result);
-                resultList.add(
-                    result.toBuilder().url(link.getUrl()).hash(linkWithTimeout.getHash()).build());
-              },
-              executorService);
-      futures.add(future);
+      List<LinkCheckerResultItem> resultList = Collections.synchronizedList(new ArrayList<>());
+      List<CompletableFuture<Void>> futures = new ArrayList<>();
+
+      for (LinkCheckerLink link : linksToCheck) {
+        CompletableFuture<Void> future =
+            createLinkCheckTask(
+                link, linkCheckerExcludesPatternMatcher, config, resultList, executorService);
+        futures.add(future);
+      }
+
+      CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+      shutdownExecutorService(executorService);
+
+      return resultList;
     }
+  }
 
-    CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+  private void checkAccess() {
+    if (!this.accessControl.isAllowRunLinkChecker()) {
+      throw new AccessDeniedException("Not allowed to run link checker");
+    }
+  }
+
+  private LinkCheckerConfig getConfig() {
+    LinkCheckerConfig config = this.linkCheckerConfigStore.get();
+    if (!config.isEnabled()) {
+      throw new LinkCheckerDisabledException("Link checker is disabled");
+    }
+    return config;
+  }
+
+  private CompletableFuture<Void> createLinkCheckTask(
+      LinkCheckerLink link,
+      LinkCheckerExcludesPatternMatcher linkCheckerExcludesPatternMatcher,
+      LinkCheckerConfig config,
+      List<LinkCheckerResultItem> resultList,
+      ExecutorService executorService) {
+    return CompletableFuture.runAsync(
+        () -> {
+          if (linkCheckerExcludesPatternMatcher.isExcluded(link.getUrl())) {
+            this.publishedExternalLinkRepository.updateCheckResult(
+                link.getHash(), LinkCheckerResultItem.builder().status(StatusType.IGNORED).build());
+            return;
+          }
+          LinkCheckerLink linkWithTimeout = link.toBuilder().timeout(config.getTimeout()).build();
+          LinkCheckerResultItem result = this.linkChecker.checkLink(linkWithTimeout);
+          this.publishedExternalLinkRepository.updateCheckResult(linkWithTimeout.getHash(), result);
+          resultList.add(
+              result.toBuilder().url(link.getUrl()).hash(linkWithTimeout.getHash()).build());
+        },
+        executorService);
+  }
+
+  private void shutdownExecutorService(ExecutorService executorService) {
     executorService.shutdown();
     try {
       if (!executorService.awaitTermination(1, TimeUnit.MINUTES)) {
         throw new LinkCheckerException("Executor did not terminate in the specified time.");
       }
     } catch (InterruptedException e) {
-      throw new LinkCheckerException("Executor awaitTermination interupted.", e);
+      throw new LinkCheckerException("Executor awaitTermination interrupted.", e);
     }
-
-    return resultList;
   }
 }

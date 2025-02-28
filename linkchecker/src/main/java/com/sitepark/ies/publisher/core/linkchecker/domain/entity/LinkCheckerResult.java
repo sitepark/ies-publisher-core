@@ -2,6 +2,7 @@ package com.sitepark.ies.publisher.core.linkchecker.domain.entity;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -25,6 +26,7 @@ public final class LinkCheckerResult {
     this.limit = builder.limit;
   }
 
+  @SuppressFBWarnings("EI_EXPOSE_REP")
   public List<LinkCheckerResultItem> getItems() {
     return items;
   }
@@ -78,8 +80,8 @@ public final class LinkCheckerResult {
         + "]";
   }
 
-  @JsonPOJOBuilder(withPrefix = "", buildMethodName = "build")
-  public static class Builder {
+  @JsonPOJOBuilder(withPrefix = "")
+  public static final class Builder {
 
     private final List<LinkCheckerResultItem> items = new ArrayList<>();
 
@@ -102,7 +104,7 @@ public final class LinkCheckerResult {
       Objects.requireNonNull(items, "items must not be null");
       this.items.clear();
       for (LinkCheckerResultItem item : items) {
-        this.items.add(item);
+        this.item(item);
       }
       return this;
     }

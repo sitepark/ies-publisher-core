@@ -17,11 +17,7 @@ class GetCheckResultsStatisticTest {
     AccessControl accessControl = mock();
     when(accessControl.isAllowGetCheckResults()).thenReturn(false);
     GetCheckResultsStatistic useCase = new GetCheckResultsStatistic(accessControl, null);
-    assertThrows(
-        AccessDeniedException.class,
-        () -> {
-          useCase.getCheckResultsStatistic();
-        });
+    assertThrows(AccessDeniedException.class, useCase::getCheckResultsStatistic);
   }
 
   @Test

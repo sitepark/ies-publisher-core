@@ -22,7 +22,7 @@ class LinkCheckerConfigTest {
 
   @Test
   @SuppressWarnings("PMD.JUnitTestsShouldIncludeAssert")
-  public void testToString() {
+  void testToString() {
     ToStringVerifier.forClass(LinkCheckerConfig.class)
         .withClassName(NameStyle.SIMPLE_NAME)
         .verify();

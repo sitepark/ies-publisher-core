@@ -15,7 +15,7 @@ public final class PublishedExternalLink {
 
   private final String url;
 
-  protected PublishedExternalLink(Builder builder) {
+  private PublishedExternalLink(Builder builder) {
     this.entity = builder.entity;
     this.channel = builder.channel;
     this.section = builder.section;
@@ -77,8 +77,8 @@ public final class PublishedExternalLink {
         + "]";
   }
 
-  @JsonPOJOBuilder(withPrefix = "", buildMethodName = "build")
-  public static class Builder {
+  @JsonPOJOBuilder(withPrefix = "")
+  public static final class Builder {
 
     private String entity;
 

@@ -24,17 +24,12 @@ public class LinkCheckerExcludesPatternMatcher {
   }
 
   private boolean matches(String url, LinkCheckerExcludePattern pattern) {
-    switch (pattern.type()) {
-      case LinkCheckerExcludePatternType.REGEX:
-        return this.matchRegex(url, pattern.pattern());
-      case LinkCheckerExcludePatternType.CONTAINS:
-        return this.matchContains(url, pattern.pattern());
-      case LinkCheckerExcludePatternType.GLOB:
-        return this.matchGlob(url, pattern.pattern());
-      case LinkCheckerExcludePatternType.EXACT:
-        return this.matchExact(url, pattern.pattern());
-    }
-    throw new IllegalArgumentException("Unsupported pattern type: " + pattern.type());
+    return switch (pattern.type()) {
+      case LinkCheckerExcludePatternType.REGEX -> this.matchRegex(url, pattern.pattern());
+      case LinkCheckerExcludePatternType.CONTAINS -> this.matchContains(url, pattern.pattern());
+      case LinkCheckerExcludePatternType.GLOB -> this.matchGlob(url, pattern.pattern());
+      case LinkCheckerExcludePatternType.EXACT -> this.matchExact(url, pattern.pattern());
+    };
   }
 
   private boolean matchRegex(String url, String pattern) {
@@ -42,7 +37,7 @@ public class LinkCheckerExcludesPatternMatcher {
   }
 
   private boolean matchContains(String url, String pattern) {
-    return url.indexOf(pattern) != -1;
+    return url.contains(pattern);
   }
 
   private boolean matchGlob(String url, String pattern) {

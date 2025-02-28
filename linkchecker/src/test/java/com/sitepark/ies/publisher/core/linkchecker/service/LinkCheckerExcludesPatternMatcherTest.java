@@ -14,56 +14,56 @@ class LinkCheckerExcludesPatternMatcherTest {
   void testRegexPatternIsExcluded() {
     LinkCheckerExcludesPatternMatcher matcher =
         this.creatMatcher(LinkCheckerExcludePatternType.REGEX, ".*\\.pdf");
-    assertTrue(matcher.isExcluded("http://example.com/test.pdf"));
+    assertTrue(matcher.isExcluded("https://example.com/test.pdf"), "Unexpected exclusion");
   }
 
   @Test
   void testRegexPatternIsNotExcluded() {
     LinkCheckerExcludesPatternMatcher matcher =
         this.creatMatcher(LinkCheckerExcludePatternType.REGEX, ".*\\.pdf");
-    assertFalse(matcher.isExcluded("http://example.com/test.html"));
+    assertFalse(matcher.isExcluded("https://example.com/test.html"), "Unexpected exclusion");
   }
 
   @Test
   void testContainsPatternIsExcluded() {
     LinkCheckerExcludesPatternMatcher matcher =
         this.creatMatcher(LinkCheckerExcludePatternType.CONTAINS, "example.com");
-    assertTrue(matcher.isExcluded("http://example.com/test.pdf"));
+    assertTrue(matcher.isExcluded("https://example.com/test.pdf"), "Unexpected exclusion");
   }
 
   @Test
   void testContainsPatternIsNotExcluded() {
     LinkCheckerExcludesPatternMatcher matcher =
         this.creatMatcher(LinkCheckerExcludePatternType.CONTAINS, "example.com");
-    assertFalse(matcher.isExcluded("http://example.de/test.html"));
+    assertFalse(matcher.isExcluded("https://example.de/test.html"), "Unexpected exclusion");
   }
 
   @Test
   void testGlobPatternIsExcluded() {
     LinkCheckerExcludesPatternMatcher matcher =
         this.creatMatcher(LinkCheckerExcludePatternType.GLOB, "**.pdf");
-    assertTrue(matcher.isExcluded("http://example.com/path/test.pdf"));
+    assertTrue(matcher.isExcluded("https://example.com/path/test.pdf"), "Unexpected exclusion");
   }
 
   @Test
   void testGlobPatternIsNotExcluded() {
     LinkCheckerExcludesPatternMatcher matcher =
         this.creatMatcher(LinkCheckerExcludePatternType.GLOB, "**.pdf");
-    assertFalse(matcher.isExcluded("http://example.de/path/test.html"));
+    assertFalse(matcher.isExcluded("https://example.de/path/test.html"), "Unexpected exclusion");
   }
 
   @Test
   void testExactPatternIsExcluded() {
     LinkCheckerExcludesPatternMatcher matcher =
-        this.creatMatcher(LinkCheckerExcludePatternType.EXACT, "http://example.com/path/test.pdf");
-    assertTrue(matcher.isExcluded("http://example.com/path/test.pdf"));
+        this.creatMatcher(LinkCheckerExcludePatternType.EXACT, "https://example.com/path/test.pdf");
+    assertTrue(matcher.isExcluded("https://example.com/path/test.pdf"), "Unexpected exclusion");
   }
 
   @Test
   void testExactPatternIsNotExcluded() {
     LinkCheckerExcludesPatternMatcher matcher =
-        this.creatMatcher(LinkCheckerExcludePatternType.EXACT, "http://example.com/path/test.pdf");
-    assertFalse(matcher.isExcluded("http://example.com/path/test.html"));
+        this.creatMatcher(LinkCheckerExcludePatternType.EXACT, "https://example.com/path/test.pdf");
+    assertFalse(matcher.isExcluded("https://example.com/path/test.html"), "Unexpected exclusion");
   }
 
   private LinkCheckerExcludesPatternMatcher creatMatcher(

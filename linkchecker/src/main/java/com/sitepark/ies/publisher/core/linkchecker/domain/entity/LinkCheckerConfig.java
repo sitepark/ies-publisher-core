@@ -20,7 +20,11 @@ public final class LinkCheckerConfig {
 
   private final List<LinkCheckerExcludePattern> excludes;
 
-  protected LinkCheckerConfig(Builder builder) {
+  public static final int MIN_PARALLEL = 1;
+
+  public static final int MAX_PARALLEL = 5;
+
+  private LinkCheckerConfig(Builder builder) {
     this.enabled = builder.enabled;
     this.parallel = builder.parallel;
     this.timeout = builder.timeout;
@@ -90,7 +94,7 @@ public final class LinkCheckerConfig {
         + "]";
   }
 
-  @JsonPOJOBuilder(withPrefix = "", buildMethodName = "build")
+  @JsonPOJOBuilder(withPrefix = "")
   public static class Builder {
 
     private boolean enabled;
@@ -124,10 +128,10 @@ public final class LinkCheckerConfig {
     }
 
     public Builder parallel(int parallel) {
-      if (parallel < 1) {
+      if (parallel < MIN_PARALLEL) {
         throw new IllegalArgumentException("Parallel must be greater than 0");
       }
-      if (parallel > 5) {
+      if (parallel > MAX_PARALLEL) {
         throw new IllegalArgumentException("Parallel must not be greater than 5");
       }
       this.parallel = parallel;

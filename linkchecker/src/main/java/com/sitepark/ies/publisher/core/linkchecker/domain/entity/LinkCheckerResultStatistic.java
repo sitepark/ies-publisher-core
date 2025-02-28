@@ -35,10 +35,8 @@ public final class LinkCheckerResultStatistic {
 
   @Override
   public boolean equals(Object o) {
-    if (!(o instanceof LinkCheckerResultStatistic that)) {
-      return false;
-    }
-    return Objects.equals(this.statusCounts, that.statusCounts);
+    return (o instanceof LinkCheckerResultStatistic that)
+        && Objects.equals(this.statusCounts, that.statusCounts);
   }
 
   @Override
@@ -46,8 +44,8 @@ public final class LinkCheckerResultStatistic {
     return "LinkCheckerResultStatistic [statusCounts=" + statusCounts + "]";
   }
 
-  @JsonPOJOBuilder(withPrefix = "", buildMethodName = "build")
-  public static class Builder {
+  @JsonPOJOBuilder(withPrefix = "")
+  public static final class Builder {
 
     private final List<StatusTypeCount> statusCounts = new ArrayList<>();
 

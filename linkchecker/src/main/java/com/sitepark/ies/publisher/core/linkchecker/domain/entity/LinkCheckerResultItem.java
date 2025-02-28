@@ -17,7 +17,7 @@ public final class LinkCheckerResultItem {
   private final String message;
   private final List<String> entities;
 
-  protected LinkCheckerResultItem(Builder builder) {
+  private LinkCheckerResultItem(Builder builder) {
     this.url = builder.url;
     this.hash = builder.hash;
     this.status = builder.status;
@@ -87,8 +87,8 @@ public final class LinkCheckerResultItem {
         + "]";
   }
 
-  @JsonPOJOBuilder(withPrefix = "", buildMethodName = "build")
-  public static class Builder {
+  @JsonPOJOBuilder(withPrefix = "")
+  public static final class Builder {
 
     private String url;
     private String hash;

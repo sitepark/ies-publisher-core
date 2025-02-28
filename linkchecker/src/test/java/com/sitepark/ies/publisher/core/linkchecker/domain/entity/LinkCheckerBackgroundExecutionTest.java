@@ -21,14 +21,14 @@ class LinkCheckerBackgroundExecutionTest {
 
   @Test
   @SuppressWarnings("PMD.JUnitTestsShouldIncludeAssert")
-  public void testToString() {
+  void testToString() {
     ToStringVerifier.forClass(LinkCheckerBackgroundExecution.class)
         .withClassName(NameStyle.SIMPLE_NAME)
         .verify();
   }
 
   @Test
-  void testMissintTopic() {
+  void testMissingTopic() {
     assertThrows(
         IllegalStateException.class, () -> LinkCheckerBackgroundExecution.builder().build());
   }
@@ -44,7 +44,7 @@ class LinkCheckerBackgroundExecutionTest {
   @Test
   void testTopic() {
     LinkCheckerBackgroundExecution execution =
-        LinkCheckerBackgroundExecution.builder().topic(new String[] {"topic1", "topic2"}).build();
+        LinkCheckerBackgroundExecution.builder().topic("topic1", "topic2").build();
 
     assertArrayEquals(new String[] {"topic1", "topic2"}, execution.getTopic(), "Unexpected topic");
   }
@@ -56,14 +56,14 @@ class LinkCheckerBackgroundExecutionTest {
             .topic("test")
             .links(
                 List.of(
-                    LinkCheckerLink.builder().url("http://example.com").build(),
-                    LinkCheckerLink.builder().url("http://example.org").build()))
+                    LinkCheckerLink.builder().url("https://example.com").build(),
+                    LinkCheckerLink.builder().url("https://example.org").build()))
             .build();
 
     assertEquals(
         List.of(
-            LinkCheckerLink.builder().url("http://example.com").build(),
-            LinkCheckerLink.builder().url("http://example.org").build()),
+            LinkCheckerLink.builder().url("https://example.com").build(),
+            LinkCheckerLink.builder().url("https://example.org").build()),
         execution.getLinks(),
         "Unexpected links");
   }
@@ -81,8 +81,8 @@ class LinkCheckerBackgroundExecutionTest {
     LinkCheckerBackgroundExecution execution =
         LinkCheckerBackgroundExecution.builder()
             .parallel(2)
-            .topic(new String[] {"topic1", "topic2"})
-            .link(LinkCheckerLink.builder().url("http://example.com").build())
+            .topic("topic1", "topic2")
+            .link(LinkCheckerLink.builder().url("https://example.com").build())
             .build()
             .toBuilder()
             .parallel(3)
@@ -91,8 +91,8 @@ class LinkCheckerBackgroundExecutionTest {
     LinkCheckerBackgroundExecution expected =
         LinkCheckerBackgroundExecution.builder()
             .parallel(3)
-            .topic(new String[] {"topic1", "topic2"})
-            .link(LinkCheckerLink.builder().url("http://example.com").build())
+            .topic("topic1", "topic2")
+            .link(LinkCheckerLink.builder().url("https://example.com").build())
             .build();
 
     assertEquals(expected, execution, "Unexpected copy after toBuilder");

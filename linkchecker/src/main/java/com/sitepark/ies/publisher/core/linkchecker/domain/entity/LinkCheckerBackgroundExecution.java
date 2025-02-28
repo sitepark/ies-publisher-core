@@ -18,7 +18,7 @@ public final class LinkCheckerBackgroundExecution {
 
   private final Consumer<LinkCheckerLink> operation;
 
-  protected LinkCheckerBackgroundExecution(Builder builder) {
+  private LinkCheckerBackgroundExecution(Builder builder) {
     this.parallel = builder.parallel;
     this.topic = builder.topic;
     this.links = Collections.unmodifiableList(builder.links);
@@ -29,11 +29,11 @@ public final class LinkCheckerBackgroundExecution {
     return this.parallel;
   }
 
-  @SuppressFBWarnings("EI_EXPOSE_REP")
   public String[] getTopic() {
     return this.topic.clone();
   }
 
+  @SuppressFBWarnings("EI_EXPOSE_REP")
   public List<LinkCheckerLink> getLinks() {
     return this.links;
   }
@@ -43,12 +43,12 @@ public final class LinkCheckerBackgroundExecution {
   }
 
   @Override
-  public final int hashCode() {
+  public int hashCode() {
     return Objects.hash(this.parallel, Arrays.hashCode(this.topic), this.links, this.operation);
   }
 
   @Override
-  public final boolean equals(Object o) {
+  public boolean equals(Object o) {
 
     if (!(o instanceof LinkCheckerBackgroundExecution that)) {
       return false;
@@ -81,7 +81,7 @@ public final class LinkCheckerBackgroundExecution {
     return new Builder(this);
   }
 
-  public static class Builder {
+  public static final class Builder {
 
     private int parallel;
 

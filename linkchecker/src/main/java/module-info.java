@@ -4,7 +4,6 @@ module com.sitepark.ies.publisher.core.linkchecker {
   exports com.sitepark.ies.publisher.core.linkchecker.usecase;
 
   requires jakarta.inject;
-  requires org.eclipse.jdt.annotation;
   requires com.github.spotbugs.annotations;
   requires com.fasterxml.jackson.databind;
   requires com.fasterxml.jackson.datatype.jdk8;

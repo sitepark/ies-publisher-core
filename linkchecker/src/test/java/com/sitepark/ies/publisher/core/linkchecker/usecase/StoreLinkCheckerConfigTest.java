@@ -20,13 +20,10 @@ class StoreLinkCheckerConfigTest {
     AccessControl accessControl = mock();
     when(accessControl.isAllowGetLinkCheckerConfig()).thenReturn(false);
     StoreLinkCheckerConfig useCase = new StoreLinkCheckerConfig(accessControl, null, null, null);
-    assertThrows(
-        AccessDeniedException.class,
-        () -> {
-          useCase.store(null);
-        });
+    assertThrows(AccessDeniedException.class, () -> useCase.store(null));
   }
 
+  @SuppressWarnings("PMD.UnitTestContainsTooManyAsserts")
   @Test
   void testStoreLinkCheckerConfig() {
     AccessControl accessControl = mock();

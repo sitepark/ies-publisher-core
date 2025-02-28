@@ -21,14 +21,14 @@ class LinkCheckerResultStatisticTest {
 
   @Test
   @SuppressWarnings("PMD.JUnitTestsShouldIncludeAssert")
-  public void testToString() {
+  void testToString() {
     ToStringVerifier.forClass(LinkCheckerResultStatistic.class)
         .withClassName(NameStyle.SIMPLE_NAME)
         .verify();
   }
 
   @Test
-  public void testToBuilder() {
+  void testToBuilder() {
     LinkCheckerResultStatistic statistic =
         LinkCheckerResultStatistic.builder()
             .statusCount(new StatusTypeCount(StatusType.OK, 5))
