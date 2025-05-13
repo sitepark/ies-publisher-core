@@ -23,7 +23,7 @@ class LinkCheckerLinkFilterTest {
 
   @Test
   @SuppressWarnings("PMD.JUnitTestsShouldIncludeAssert")
-  public void testToString() {
+  void testToString() {
     ToStringVerifier.forClass(LinkCheckerLinkFilter.class)
         .withClassName(NameStyle.SIMPLE_NAME)
         .verify();
@@ -31,8 +31,7 @@ class LinkCheckerLinkFilterTest {
 
   @Test
   void testTermsArray() {
-    LinkCheckerLinkFilter filter =
-        LinkCheckerLinkFilter.builder().terms(new String[] {"term1", "term2"}).build();
+    LinkCheckerLinkFilter filter = LinkCheckerLinkFilter.builder().terms("term1", "term2").build();
 
     assertEquals(Arrays.asList("term1", "term2"), filter.getTerms(), "Unexpected terms");
   }

@@ -31,12 +31,10 @@ class LinkCheckByHashesTest {
     when(accessControl.isAllowRunLinkChecker()).thenReturn(false);
     LinkCheckByHashes useCase = new LinkCheckByHashes(accessControl, null, null, null);
     assertThrows(
-        AccessDeniedException.class,
-        () -> {
-          useCase.linkCheckByHashes(Collections.emptyList());
-        });
+        AccessDeniedException.class, () -> useCase.linkCheckByHashes(Collections.emptyList()));
   }
 
+  @SuppressWarnings("PMD.UnitTestContainsTooManyAsserts")
   @Test
   void testCheck() {
 
@@ -82,6 +80,7 @@ class LinkCheckByHashesTest {
                 .hash("hash2")
                 .status(StatusType.OK)
                 .build()),
-        result);
+        result,
+        "Unexpected result");
   }
 }

@@ -21,7 +21,7 @@ class PublishedExternalLinkTest {
 
   @Test
   @SuppressWarnings("PMD.JUnitTestsShouldIncludeAssert")
-  public void testToString() {
+  void testToString() {
     ToStringVerifier.forClass(PublishedExternalLink.class)
         .withClassName(NameStyle.SIMPLE_NAME)
         .verify();
@@ -43,9 +43,9 @@ class PublishedExternalLinkTest {
 
   @Test
   void testSetUrl() {
-    PublishedExternalLink link = PublishedExternalLink.builder().url("http://example.com").build();
+    PublishedExternalLink link = PublishedExternalLink.builder().url("https://example.com").build();
 
-    assertEquals("http://example.com", link.getUrl(), "unexpected url");
+    assertEquals("https://example.com", link.getUrl(), "unexpected url");
   }
 
   @Test
@@ -55,7 +55,7 @@ class PublishedExternalLinkTest {
             .entity("123")
             .channel("2")
             .section("abc")
-            .url("http://example.com")
+            .url("https://example.com")
             .build()
             .toBuilder()
             .section("def")
@@ -66,7 +66,7 @@ class PublishedExternalLinkTest {
             .entity("123")
             .channel("2")
             .section("def")
-            .url("http://example.com")
+            .url("https://example.com")
             .build();
 
     assertEquals(expected, link, "Unexpected link after toBuilder");
@@ -80,13 +80,13 @@ class PublishedExternalLinkTest {
     mapper.registerModule(new JavaTimeModule());
 
     String data =
-        "{\"entity\":\"123\",\"channel\":\"2\",\"section\":\"abc\",\"url\":\"http://example.com\"}";
+        "{\"entity\":\"123\",\"channel\":\"2\",\"section\":\"abc\",\"url\":\"https://example.com\"}";
 
     PublishedExternalLink link = mapper.readValue(data, PublishedExternalLink.class);
 
     PublishedExternalLink expected =
         PublishedExternalLink.builder()
-            .url("http://example.com")
+            .url("https://example.com")
             .channel("2")
             .section("abc")
             .entity("123")
@@ -104,7 +104,7 @@ class PublishedExternalLinkTest {
 
     PublishedExternalLink link =
         PublishedExternalLink.builder()
-            .url("http://example.com")
+            .url("https://example.com")
             .channel("2")
             .section("abc")
             .entity("123")
@@ -112,7 +112,7 @@ class PublishedExternalLinkTest {
 
     String json = mapper.writeValueAsString(link);
     assertEquals(
-        "{\"entity\":\"123\",\"channel\":\"2\",\"section\":\"abc\",\"url\":\"http://example.com\"}",
+        "{\"entity\":\"123\",\"channel\":\"2\",\"section\":\"abc\",\"url\":\"https://example.com\"}",
         json,
         "Unexpected JSON output");
   }

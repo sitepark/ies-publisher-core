@@ -3,6 +3,7 @@ package com.sitepark.ies.publisher.core.linkchecker.domain.entity;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -21,10 +22,12 @@ public final class LinkCheckerLinkFilter {
     this.statusTypes = Collections.unmodifiableList(builder.statusTypes);
   }
 
+  @SuppressFBWarnings("EI_EXPOSE_REP")
   public List<String> getTerms() {
     return this.terms;
   }
 
+  @SuppressFBWarnings("EI_EXPOSE_REP")
   public List<StatusType> getStatusTypes() {
     return this.statusTypes;
   }
@@ -62,8 +65,8 @@ public final class LinkCheckerLinkFilter {
         + '}';
   }
 
-  @JsonPOJOBuilder(withPrefix = "", buildMethodName = "build")
-  public static class Builder {
+  @JsonPOJOBuilder(withPrefix = "")
+  public static final class Builder {
 
     private List<String> terms = new ArrayList<>();
 
@@ -86,7 +89,7 @@ public final class LinkCheckerLinkFilter {
       return this;
     }
 
-    public Builder terms(String[] terms) {
+    public Builder terms(String... terms) {
       Objects.requireNonNull(terms, "terms is null");
       this.terms.clear();
       for (String term : terms) {

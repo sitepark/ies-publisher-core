@@ -21,19 +21,19 @@ class LinkCheckerLinkTest {
 
   @Test
   @SuppressWarnings("PMD.JUnitTestsShouldIncludeAssert")
-  public void testToString() {
+  void testToString() {
     ToStringVerifier.forClass(LinkCheckerLink.class).withClassName(NameStyle.SIMPLE_NAME).verify();
   }
 
   @Test
-  public void testToBuilder() {
+  void testToBuilder() {
     LinkCheckerLink link =
-        LinkCheckerLink.builder().hash("hash").url("http://example.com").timeout(5).build();
+        LinkCheckerLink.builder().hash("hash").url("https://example.com").timeout(5).build();
 
     LinkCheckerLink copy = link.toBuilder().timeout(10).build();
 
     LinkCheckerLink expected =
-        LinkCheckerLink.builder().hash("hash").url("http://example.com").timeout(10).build();
+        LinkCheckerLink.builder().hash("hash").url("https://example.com").timeout(10).build();
 
     assertEquals(expected, copy, "Unexpected link after toBuilder");
   }
@@ -46,11 +46,11 @@ class LinkCheckerLinkTest {
     mapper.registerModule(new JavaTimeModule());
 
     LinkCheckerLink link =
-        LinkCheckerLink.builder().hash("hash").url("http://example.com").timeout(5).build();
+        LinkCheckerLink.builder().hash("hash").url("https://example.com").timeout(5).build();
 
     String json = mapper.writeValueAsString(link);
     assertEquals(
-        "{\"hash\":\"hash\",\"url\":\"http://example.com\",\"timeout\":5}",
+        "{\"hash\":\"hash\",\"url\":\"https://example.com\",\"timeout\":5}",
         json,
         "Unexpected JSON output");
   }
@@ -62,12 +62,12 @@ class LinkCheckerLinkTest {
     mapper.registerModule(new Jdk8Module());
     mapper.registerModule(new JavaTimeModule());
 
-    String data = "{\"hash\":\"hash\",\"url\":\"http://example.com\",\"timeout\":5}";
+    String data = "{\"hash\":\"hash\",\"url\":\"https://example.com\",\"timeout\":5}";
 
     LinkCheckerLink link = mapper.readValue(data, LinkCheckerLink.class);
 
     LinkCheckerLink expected =
-        LinkCheckerLink.builder().hash("hash").url("http://example.com").timeout(5).build();
+        LinkCheckerLink.builder().hash("hash").url("https://example.com").timeout(5).build();
 
     assertEquals(expected, link, "Unexpected link deserialization");
   }

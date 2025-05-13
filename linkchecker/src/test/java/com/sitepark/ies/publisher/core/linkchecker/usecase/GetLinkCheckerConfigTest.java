@@ -17,11 +17,7 @@ class GetLinkCheckerConfigTest {
     AccessControl accessControl = mock();
     when(accessControl.isAllowGetLinkCheckerConfig()).thenReturn(false);
     GetLinkCheckerConfig useCase = new GetLinkCheckerConfig(accessControl, null);
-    assertThrows(
-        AccessDeniedException.class,
-        () -> {
-          useCase.get();
-        });
+    assertThrows(AccessDeniedException.class, useCase::get);
   }
 
   @Test

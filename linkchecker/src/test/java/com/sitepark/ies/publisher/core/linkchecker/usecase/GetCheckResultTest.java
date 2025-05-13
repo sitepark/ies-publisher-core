@@ -18,11 +18,7 @@ class GetCheckResultTest {
     AccessControl accessControl = mock();
     when(accessControl.isAllowGetCheckResults()).thenReturn(false);
     GetCheckResult useCase = new GetCheckResult(accessControl, null);
-    assertThrows(
-        AccessDeniedException.class,
-        () -> {
-          useCase.getCheckResult(null, 0, 0);
-        });
+    assertThrows(AccessDeniedException.class, () -> useCase.getCheckResult(null, 0, 0));
   }
 
   @Test

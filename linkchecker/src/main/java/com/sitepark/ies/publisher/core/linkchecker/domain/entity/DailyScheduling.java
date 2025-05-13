@@ -11,7 +11,7 @@ public final class DailyScheduling implements Scheduling {
 
   private final LocalTime startTime;
 
-  protected DailyScheduling(Builder builder) {
+  private DailyScheduling(Builder builder) {
     this.startTime = builder.startTime;
   }
 
@@ -40,12 +40,7 @@ public final class DailyScheduling implements Scheduling {
 
   @Override
   public boolean equals(Object o) {
-
-    if (!(o instanceof DailyScheduling that)) {
-      return false;
-    }
-
-    return Objects.equals(this.startTime, that.startTime);
+    return (o instanceof DailyScheduling that) && Objects.equals(this.startTime, that.startTime);
   }
 
   @Override
@@ -53,8 +48,8 @@ public final class DailyScheduling implements Scheduling {
     return "DailyScheduling [startTime=" + startTime + "]";
   }
 
-  @JsonPOJOBuilder(withPrefix = "", buildMethodName = "build")
-  public static class Builder {
+  @JsonPOJOBuilder(withPrefix = "")
+  public static final class Builder {
 
     private LocalTime startTime;
 

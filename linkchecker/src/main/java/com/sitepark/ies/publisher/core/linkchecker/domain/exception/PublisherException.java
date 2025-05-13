@@ -1,8 +1,10 @@
 package com.sitepark.ies.publisher.core.linkchecker.domain.exception;
 
+import java.io.Serial;
+
 public abstract class PublisherException extends RuntimeException {
 
-  private static final long serialVersionUID = 1L;
+  @Serial private static final long serialVersionUID = 1L;
 
   public PublisherException() {
     super();

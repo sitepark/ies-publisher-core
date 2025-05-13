@@ -31,13 +31,10 @@ class BackgroundLinkCheckTest {
     AccessControl accessControl = mock();
     when(accessControl.isAllowRunLinkChecker()).thenReturn(false);
     BackgroundLinkCheck useCase = new BackgroundLinkCheck(accessControl, null, null, null, null);
-    assertThrows(
-        AccessDeniedException.class,
-        () -> {
-          useCase.backgroundLinkCheck();
-        });
+    assertThrows(AccessDeniedException.class, useCase::backgroundLinkCheck);
   }
 
+  @SuppressWarnings("PMD.UnitTestContainsTooManyAsserts")
   @Test
   void testBackgroundLinkCheck() {
     AccessControl accessControl = mock();

@@ -21,7 +21,7 @@ class LinkCheckerResultItemTest {
 
   @Test
   @SuppressWarnings("PMD.JUnitTestsShouldIncludeAssert")
-  public void testToString() {
+  void testToString() {
     ToStringVerifier.forClass(LinkCheckerResultItem.class)
         .withClassName(NameStyle.SIMPLE_NAME)
         .verify();
@@ -31,7 +31,7 @@ class LinkCheckerResultItemTest {
   void testToBuilder() {
     LinkCheckerResultItem item =
         LinkCheckerResultItem.builder()
-            .url("http://example.com")
+            .url("https://example.com")
             .hash("hash")
             .status(StatusType.OK)
             .message("message")
@@ -44,7 +44,7 @@ class LinkCheckerResultItemTest {
 
     LinkCheckerResultItem expected =
         LinkCheckerResultItem.builder()
-            .url("http://example.com")
+            .url("https://example.com")
             .hash("hash")
             .status(StatusType.OK)
             .message("new message")
@@ -62,13 +62,13 @@ class LinkCheckerResultItemTest {
     mapper.registerModule(new JavaTimeModule());
 
     String data =
-        "{\"url\":\"http://example.com\",\"hash\":\"hash\",\"status\":\"OK\",\"message\":\"message\",\"entities\":[\"123\",\"345\"]}";
+        "{\"url\":\"https://example.com\",\"hash\":\"hash\",\"status\":\"OK\",\"message\":\"message\",\"entities\":[\"123\",\"345\"]}";
 
     LinkCheckerResultItem item = mapper.readValue(data, LinkCheckerResultItem.class);
 
     LinkCheckerResultItem expected =
         LinkCheckerResultItem.builder()
-            .url("http://example.com")
+            .url("https://example.com")
             .hash("hash")
             .status(StatusType.OK)
             .message("message")
@@ -88,7 +88,7 @@ class LinkCheckerResultItemTest {
 
     LinkCheckerResultItem item =
         LinkCheckerResultItem.builder()
-            .url("http://example.com")
+            .url("https://example.com")
             .hash("hash")
             .status(StatusType.OK)
             .message("message")
@@ -98,7 +98,7 @@ class LinkCheckerResultItemTest {
 
     String json = mapper.writeValueAsString(item);
     assertEquals(
-        "{\"url\":\"http://example.com\",\"hash\":\"hash\",\"status\":\"OK\",\"message\":\"message\",\"entities\":[\"123\",\"345\"]}",
+        "{\"url\":\"https://example.com\",\"hash\":\"hash\",\"status\":\"OK\",\"message\":\"message\",\"entities\":[\"123\",\"345\"]}",
         json,
         "Unexpected JSON output");
   }

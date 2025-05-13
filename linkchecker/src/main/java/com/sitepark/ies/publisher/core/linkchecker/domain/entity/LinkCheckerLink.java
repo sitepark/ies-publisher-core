@@ -13,7 +13,7 @@ public final class LinkCheckerLink {
 
   private final int timeout;
 
-  protected LinkCheckerLink(Builder builder) {
+  private LinkCheckerLink(Builder builder) {
     this.hash = builder.hash;
     this.url = builder.url;
     this.timeout = builder.timeout;
@@ -61,8 +61,8 @@ public final class LinkCheckerLink {
     return "LinkCheckerLink [hash=" + hash + ", url=" + url + ", timeout=" + timeout + "]";
   }
 
-  @JsonPOJOBuilder(withPrefix = "", buildMethodName = "build")
-  public static class Builder {
+  @JsonPOJOBuilder(withPrefix = "")
+  public static final class Builder {
 
     private String hash;
 

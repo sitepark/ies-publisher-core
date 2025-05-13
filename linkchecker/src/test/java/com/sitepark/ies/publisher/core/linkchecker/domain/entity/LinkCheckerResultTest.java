@@ -21,7 +21,7 @@ class LinkCheckerResultTest {
 
   @Test
   @SuppressWarnings("PMD.JUnitTestsShouldIncludeAssert")
-  public void testToString() {
+  void testToString() {
     ToStringVerifier.forClass(LinkCheckerResult.class)
         .withClassName(NameStyle.SIMPLE_NAME)
         .verify();
@@ -34,7 +34,7 @@ class LinkCheckerResultTest {
             .total(2)
             .start(1)
             .limit(3)
-            .item(LinkCheckerResultItem.builder().url("http://example.com").build())
+            .item(LinkCheckerResultItem.builder().url("https://example.com").build())
             .build()
             .toBuilder()
             .limit(4)
@@ -45,7 +45,7 @@ class LinkCheckerResultTest {
             .total(2)
             .start(1)
             .limit(4)
-            .item(LinkCheckerResultItem.builder().url("http://example.com").build())
+            .item(LinkCheckerResultItem.builder().url("https://example.com").build())
             .build();
 
     assertEquals(expected, result, "Unexpected copy after toBuilder");
@@ -63,12 +63,12 @@ class LinkCheckerResultTest {
             .total(2)
             .start(1)
             .limit(3)
-            .item(LinkCheckerResultItem.builder().url("http://example.com").build())
+            .item(LinkCheckerResultItem.builder().url("https://example.com").build())
             .build();
 
     String json = mapper.writeValueAsString(result);
     assertEquals(
-        "{\"items\":[{\"url\":\"http://example.com\",\"hash\":null,\"status\":null,\"message\":null,\"entities\":[]}],\"total\":2,\"start\":1,\"limit\":3}",
+        "{\"items\":[{\"url\":\"https://example.com\",\"hash\":null,\"status\":null,\"message\":null,\"entities\":[]}],\"total\":2,\"start\":1,\"limit\":3}",
         json,
         "Unexpected JSON output");
   }
@@ -81,7 +81,7 @@ class LinkCheckerResultTest {
     mapper.registerModule(new JavaTimeModule());
 
     String data =
-        "{\"items\":[{\"url\":\"http://example.com\",\"hash\":null,\"status\":null,\"message\":null,\"entities\":[]}],\"total\":2,\"start\":1,\"limit\":3}";
+        "{\"items\":[{\"url\":\"https://example.com\",\"hash\":null,\"status\":null,\"message\":null,\"entities\":[]}],\"total\":2,\"start\":1,\"limit\":3}";
 
     LinkCheckerResult result = mapper.readValue(data, LinkCheckerResult.class);
 
@@ -90,7 +90,7 @@ class LinkCheckerResultTest {
             .total(2)
             .start(1)
             .limit(3)
-            .item(LinkCheckerResultItem.builder().url("http://example.com").build())
+            .item(LinkCheckerResultItem.builder().url("https://example.com").build())
             .build();
 
     assertEquals(expected, result, "Unexpected result deserialization");
