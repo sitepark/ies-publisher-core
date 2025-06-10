@@ -2,7 +2,6 @@ package com.sitepark.ies.publisher.core.linkchecker.domain.entity;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -17,7 +16,6 @@ public final class LinkCheckerResultStatistic {
     this.statusCounts = Collections.unmodifiableList(builder.statusCounts);
   }
 
-  @SuppressFBWarnings("EI_EXPOSE_REP")
   public List<StatusTypeCount> getStatusCounts() {
     return this.statusCounts;
   }

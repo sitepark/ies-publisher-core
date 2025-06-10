@@ -1,6 +1,5 @@
 package com.sitepark.ies.publisher.core.linkchecker.domain.entity;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -33,7 +32,6 @@ public final class LinkCheckerBackgroundExecution {
     return this.topic.clone();
   }
 
-  @SuppressFBWarnings("EI_EXPOSE_REP")
   public List<LinkCheckerLink> getLinks() {
     return this.links;
   }
