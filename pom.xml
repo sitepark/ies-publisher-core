@@ -38,6 +38,7 @@
 	</developers>
 
 	<modules>
+		<module>channel</module>
 		<module>linkchecker</module>
 	</modules>
 
