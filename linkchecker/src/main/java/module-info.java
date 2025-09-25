@@ -8,6 +8,7 @@ module com.sitepark.ies.publisher.core.linkchecker {
   requires com.fasterxml.jackson.databind;
   requires com.fasterxml.jackson.datatype.jdk8;
   requires com.fasterxml.jackson.datatype.jsr310;
+  requires com.sitepark.ies.sharedkernel;
 
   opens com.sitepark.ies.publisher.core.linkchecker.domain.entity to
       com.fasterxml.jackson.databind;
