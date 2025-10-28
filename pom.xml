@@ -72,13 +72,6 @@
 				<scope>import</scope>
 			</dependency>
 			<dependency>
-				<groupId>org.junit</groupId>
-				<artifactId>junit-bom</artifactId>
-				<version>${junit.version}</version>
-				<type>pom</type>
-				<scope>import</scope>
-			</dependency>
-			<dependency>
 				<groupId>com.github.spotbugs</groupId>
 				<artifactId>spotbugs-annotations</artifactId>
 				<version>4.9.8</version>
@@ -113,22 +106,18 @@
 
 			<!-- Test-Dependencies -->
 			<dependency>
-				<groupId>org.junit.jupiter</groupId>
-				<artifactId>junit-jupiter-api</artifactId>
+				<groupId>org.junit</groupId>
+				<artifactId>junit-bom</artifactId>
 				<version>${junit.version}</version>
-				<scope>test</scope>
+				<type>pom</type>
+				<scope>import</scope>
 			</dependency>
 			<dependency>
-				<groupId>org.junit.jupiter</groupId>
-				<artifactId>junit-jupiter-engine</artifactId>
-				<version>${junit.version}</version>
-				<scope>test</scope>
-			</dependency>
-			<dependency>
-				<groupId>org.hamcrest</groupId>
-				<artifactId>hamcrest-library</artifactId>
-				<version>3.0</version>
-				<scope>test</scope>
+				<groupId>org.assertj</groupId>
+				<artifactId>assertj-bom</artifactId>
+				<version>3.27.6</version>
+				<type>pom</type>
+				<scope>import</scope>
 			</dependency>
 			<dependency>
 				<groupId>org.mockito</groupId>
