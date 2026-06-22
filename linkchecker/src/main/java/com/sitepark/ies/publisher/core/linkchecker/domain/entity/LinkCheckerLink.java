@@ -53,7 +53,7 @@ public final class LinkCheckerLink {
 
     return Objects.equals(this.hash, that.hash)
         && Objects.equals(this.url, that.url)
-        && Objects.equals(this.timeout, that.timeout);
+        && this.timeout == that.timeout;
   }
 
   @Override

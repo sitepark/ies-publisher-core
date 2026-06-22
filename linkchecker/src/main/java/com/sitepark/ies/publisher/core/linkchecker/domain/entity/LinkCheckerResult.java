@@ -60,9 +60,9 @@ public final class LinkCheckerResult {
       return false;
     }
     return Objects.equals(this.items, that.items)
-        && Objects.equals(this.total, that.total)
-        && Objects.equals(this.start, that.start)
-        && Objects.equals(this.limit, that.limit);
+        && this.total == that.total
+        && this.start == that.start
+        && this.limit == that.limit;
   }
 
   @Override

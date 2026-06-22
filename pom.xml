@@ -166,6 +166,8 @@
 						<arg>-XDcompilePolicy=simple</arg>
 						<arg>--should-stop=ifError=FLOW</arg>
 						<arg>-Xplugin:ErrorProne -Xep:NullAway:ERROR -XepOpt:NullAway:JSpecifyMode=true -XepOpt:NullAway:AnnotatedPackages=com.sitepark.ies</arg>
+						<!-- Fail the build on any Error Prone (or javac) warning. -->
+						<arg>-Werror</arg>
 					</compilerArgs>
 					<annotationProcessorPaths>
 						<path>

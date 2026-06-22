@@ -72,9 +72,9 @@ public final class LinkCheckerConfig {
       return false;
     }
 
-    return Objects.equals(this.enabled, that.enabled)
-        && Objects.equals(this.timeout, that.timeout)
-        && Objects.equals(this.parallel, that.parallel)
+    return this.enabled == that.enabled
+        && this.timeout == that.timeout
+        && this.parallel == that.parallel
         && Objects.equals(this.scheduling, that.scheduling)
         && Objects.equals(this.excludes, that.excludes);
   }
