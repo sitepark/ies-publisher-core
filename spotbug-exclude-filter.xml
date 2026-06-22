@@ -16,6 +16,12 @@
 		<Bug pattern="EI_EXPOSE_REP2"/>
 	</Match>
 
+	<Match>
+		<Class name="~com.sitepark.ies.publisher.core\..*\.usecase\..*"/>
+		<Method name="&lt;init&gt;"/>
+		<Bug pattern="EI_EXPOSE_REP2"/>
+	</Match>
+
 	<!-- False positive: https://github.com/spotbugs/spotbugs/issues/2628 -->
 	<Match>
 		<Class name="~.*\.*Test"/>
