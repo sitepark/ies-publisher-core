@@ -1,8 +1,9 @@
 package com.sitepark.ies.publisher.core.channel.domain.entity;
 
 import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
+import org.jspecify.annotations.Nullable;
 
-public record ChannelInfo(String id, String name, String description) {
+public record ChannelInfo(String id, String name, @Nullable String description) {
 
   public ChannelInfo {
     if (id == null || id.isBlank()) {
@@ -18,10 +19,11 @@ public record ChannelInfo(String id, String name, String description) {
   }
 
   @JsonPOJOBuilder(withPrefix = "")
+  @SuppressWarnings("NullAway.Init")
   public static class Builder {
     private String id;
     private String name;
-    private String description;
+    private @Nullable String description;
 
     public Builder id(String id) {
       this.id = id;

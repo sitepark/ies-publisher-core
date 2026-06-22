@@ -79,6 +79,7 @@ public final class LinkCheckerBackgroundExecution {
     return new Builder(this);
   }
 
+  @SuppressWarnings("NullAway.Init")
   public static final class Builder {
 
     private int parallel;

@@ -2,9 +2,10 @@ package com.sitepark.ies.publisher.core.publishing.domain.entity;
 
 import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
 import com.sitepark.ies.sharedkernel.domain.UrlMappingMode;
+import org.jspecify.annotations.Nullable;
 
 public record PublishedUrlMapping(
-    String id,
+    @Nullable String id,
     String siteId,
     String channelId,
     String path,
@@ -64,8 +65,9 @@ public record PublishedUrlMapping(
   }
 
   @JsonPOJOBuilder(withPrefix = "")
+  @SuppressWarnings("NullAway.Init")
   public static class Builder {
-    private String id;
+    private @Nullable String id;
     private String siteId;
     private String channelId;
     private String path;
@@ -85,7 +87,7 @@ public record PublishedUrlMapping(
       this.priority = mapping.priority;
     }
 
-    public Builder id(String id) {
+    public Builder id(@Nullable String id) {
       this.id = id;
       return this;
     }

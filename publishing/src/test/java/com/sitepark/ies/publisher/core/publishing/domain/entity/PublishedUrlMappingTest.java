@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.jparams.verifier.tostring.ToStringVerifier;
 import com.sitepark.ies.sharedkernel.domain.UrlMappingMode;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import nl.jqno.equalsverifier.EqualsVerifier;
 import nl.jqno.equalsverifier.Warning;
 import org.junit.jupiter.api.Test;
@@ -23,7 +22,6 @@ class PublishedUrlMappingTest {
   }
 
   @Test
-  @SuppressFBWarnings("NP_NULL_PARAM_DEREF_ALL_TARGETS_DANGEROUS")
   void buildWithNullSiteId_throwsException() {
     assertThatThrownBy(() -> base().siteId(null).build())
         .as("null siteId should throw an IllegalArgumentException")
@@ -38,7 +36,6 @@ class PublishedUrlMappingTest {
   }
 
   @Test
-  @SuppressFBWarnings("NP_NULL_PARAM_DEREF_ALL_TARGETS_DANGEROUS")
   void buildWithNullChannelId_throwsException() {
     assertThatThrownBy(() -> base().channelId(null).build())
         .as("null channelId should throw an IllegalArgumentException")
@@ -53,7 +50,6 @@ class PublishedUrlMappingTest {
   }
 
   @Test
-  @SuppressFBWarnings("NP_NULL_PARAM_DEREF_ALL_TARGETS_DANGEROUS")
   void buildWithNullPath_throwsException() {
     assertThatThrownBy(() -> base().path(null).build())
         .as("null path should throw an IllegalArgumentException")
@@ -68,7 +64,6 @@ class PublishedUrlMappingTest {
   }
 
   @Test
-  @SuppressFBWarnings("NP_NULL_PARAM_DEREF_ALL_TARGETS_DANGEROUS")
   void buildWithNullOwnerId_throwsException() {
     assertThatThrownBy(() -> base().ownerId(null).build())
         .as("null ownerId should throw an IllegalArgumentException")
@@ -83,7 +78,6 @@ class PublishedUrlMappingTest {
   }
 
   @Test
-  @SuppressFBWarnings("NP_NULL_PARAM_DEREF_ALL_TARGETS_DANGEROUS")
   void buildWithNullMode_throwsException() {
     assertThatThrownBy(() -> base().mode(null).build())
         .as("null mode should throw an IllegalArgumentException")

@@ -78,6 +78,7 @@ public final class PublishedExternalLink {
   }
 
   @JsonPOJOBuilder(withPrefix = "")
+  @SuppressWarnings("NullAway.Init")
   public static final class Builder {
 
     private String entity;

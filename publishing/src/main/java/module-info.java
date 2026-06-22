@@ -1,3 +1,6 @@
+import org.jspecify.annotations.NullMarked;
+
+@NullMarked
 module com.sitepark.ies.publisher.core.publishing {
   exports com.sitepark.ies.publisher.core.publishing.domain.entity;
   exports com.sitepark.ies.publisher.core.publishing.domain.value;
@@ -5,7 +8,7 @@ module com.sitepark.ies.publisher.core.publishing {
   exports com.sitepark.ies.publisher.core.publishing.usecase;
 
   requires jakarta.inject;
-  requires com.github.spotbugs.annotations;
+  requires static org.jspecify;
   requires com.fasterxml.jackson.databind;
   requires com.fasterxml.jackson.datatype.jdk8;
   requires com.fasterxml.jackson.datatype.jsr310;

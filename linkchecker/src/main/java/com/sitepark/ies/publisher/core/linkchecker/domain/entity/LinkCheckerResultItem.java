@@ -88,6 +88,7 @@ public final class LinkCheckerResultItem {
   }
 
   @JsonPOJOBuilder(withPrefix = "")
+  @SuppressWarnings("NullAway.Init")
   public static final class Builder {
 
     private String url;

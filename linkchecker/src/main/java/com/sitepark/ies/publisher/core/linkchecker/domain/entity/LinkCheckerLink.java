@@ -62,6 +62,7 @@ public final class LinkCheckerLink {
   }
 
   @JsonPOJOBuilder(withPrefix = "")
+  @SuppressWarnings("NullAway.Init")
   public static final class Builder {
 
     private String hash;

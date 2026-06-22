@@ -5,11 +5,12 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
 import java.time.LocalTime;
 import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 
 @JsonDeserialize(builder = DailyScheduling.Builder.class)
 public final class DailyScheduling implements Scheduling {
 
-  private final LocalTime startTime;
+  private final @Nullable LocalTime startTime;
 
   private DailyScheduling(Builder builder) {
     this.startTime = builder.startTime;
@@ -21,7 +22,7 @@ public final class DailyScheduling implements Scheduling {
   }
 
   @JsonFormat(pattern = "HH:mm")
-  public LocalTime getStartTime() {
+  public @Nullable LocalTime getStartTime() {
     return this.startTime;
   }
 
@@ -51,7 +52,7 @@ public final class DailyScheduling implements Scheduling {
   @JsonPOJOBuilder(withPrefix = "")
   public static final class Builder {
 
-    private LocalTime startTime;
+    private @Nullable LocalTime startTime;
 
     private Builder() {}
 

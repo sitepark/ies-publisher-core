@@ -95,6 +95,7 @@ public final class LinkCheckerConfig {
   }
 
   @JsonPOJOBuilder(withPrefix = "")
+  @SuppressWarnings("NullAway.Init")
   public static class Builder {
 
     private boolean enabled;

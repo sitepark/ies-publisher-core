@@ -86,6 +86,7 @@ public record OwnerUrlMappings(
   }
 
   @JsonPOJOBuilder(withPrefix = "")
+  @SuppressWarnings("NullAway.Init")
   public static class Builder {
     private String ownerId;
     private String channelId;
