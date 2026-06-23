@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-IES Publisher Core is the core library of the IES Publisher component — a multi-module Maven project that manages publishing pipelines, link checking, and channel management. It follows strict **Hexagonal Architecture** (Ports & Adapters) and uses Java 21 module system.
+IES Publisher Core is the core library of the IES Publisher component — a multi-module Maven project that manages publishing pipelines, link checking, and channel management. It follows strict **Hexagonal Architecture** (Ports & Adapters) and uses the Java 25 module system.
 
 ## Build & Common Commands
 
@@ -15,7 +15,7 @@ mvn clean compile
 # Run all tests
 mvn test
 
-# Full build with checks (formatting, PMD, SpotBugs)
+# Full build with checks (formatting, PMD, Error Prone + NullAway)
 mvn clean verify
 
 # Run a single test class
@@ -27,13 +27,14 @@ mvn spotless:apply
 # Check formatting without applying
 mvn spotless:check
 
-# Static analysis
+# Static analysis (PMD). Error Prone + NullAway run during normal compilation.
 mvn pmd:check
-mvn spotbugs:check
 
 # Code coverage report (target/site/jacoco/index.html)
 mvn jacoco:report
 ```
+
+**Requires JDK 25.** Error Prone runs as a compiler plugin; the required `--add-exports`/`--add-opens` for `jdk.compiler` live in `.mvn/jvm.config` and are picked up automatically (locally and in CI).
 
 ## Module Structure
 
@@ -69,21 +70,28 @@ Use cases never depend on each other. Ports are never implemented inside this li
 
 ### Domain Entities (Records + Builder)
 
+Each `module-info.java` is `@NullMarked` (JSpecify), so every type is non-null by
+default — only genuinely-optional values get `@Nullable`. NullAway (in JSpecify mode)
+enforces this at compile time.
+
 ```java
 @JsonDeserialize(builder = MyEntity.Builder.class)
-public record MyEntity(String id, String name) {
-  public MyEntity {  // compact constructor validates
+public record MyEntity(String id, String name, @Nullable String description) {
+  public MyEntity {  // compact constructor validates required fields
     Objects.requireNonNull(id, "id is required");
   }
   public static Builder builder() { return new Builder(); }
 
   @JsonPOJOBuilder(withPrefix = "")
+  @SuppressWarnings("NullAway.Init") // required fields are set after construction
   public static class Builder {
     private String id;
     private String name;
+    private @Nullable String description; // optional → nullable
     public Builder id(String id) { this.id = id; return this; }
     public Builder name(String name) { this.name = name; return this; }
-    public MyEntity build() { return new MyEntity(id, name); }
+    public Builder description(String description) { this.description = description; return this; }
+    public MyEntity build() { return new MyEntity(id, name, description); }
   }
 }
 ```
@@ -135,9 +143,11 @@ All checks run as part of `mvn verify` and **must pass before merging**:
 | Tool | Config | Threshold |
 |---|---|---|
 | Spotless | Google Java Format | Zero violations |
-| SpotBugs | Max effort | Low threshold |
-| PMD | Custom ruleset | High priority failures block |
+| Error Prone + NullAway | JSpecify mode, NullAway as `ERROR` (main code only) | Any finding fails the build |
+| PMD 7 | Custom ruleset | High priority failures block |
 | JaCoCo | Report only | No enforced minimum |
+
+NullAway is disabled for test code (tests deliberately pass `null` to verify rejection).
 
 Always run `mvn spotless:apply` before committing to avoid formatting failures in CI.
 
@@ -146,4 +156,4 @@ Always run `mvn spotless:apply` before committing to avoid formatting failures i
 - `com.sitepark.ies:ies-shared-kernel` — shared domain types across IES modules
 - `jakarta.inject:jakarta.inject-api` — DI annotations (`@Inject`); no Spring
 - `com.fasterxml.jackson.*` — JSON serialization (databind, jsr310, jdk8)
-- `com.github.spotbugs:spotbugs-annotations` — null safety (`@NonNull`, `@CheckForNull`)
+- `org.jspecify:jspecify` — null-safety annotations (`@NullMarked`, `@Nullable`) enforced by NullAway

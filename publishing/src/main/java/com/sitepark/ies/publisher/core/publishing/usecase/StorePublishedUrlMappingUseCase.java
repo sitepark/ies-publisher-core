@@ -26,6 +26,11 @@ public class StorePublishedUrlMappingUseCase {
 
   private final PublishedUrlMappingRepository repository;
 
+  /**
+   * Creates the use case with its required repository dependency.
+   *
+   * @param repository the repository used to load and persist URL mappings
+   */
   @Inject
   public StorePublishedUrlMappingUseCase(PublishedUrlMappingRepository repository) {
     this.repository = repository;

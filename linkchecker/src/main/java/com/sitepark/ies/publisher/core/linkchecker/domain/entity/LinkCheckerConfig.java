@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
+/** Configuration controlling whether, how and when the link checker runs. */
 @JsonDeserialize(builder = LinkCheckerConfig.Builder.class)
 public final class LinkCheckerConfig {
 
@@ -20,8 +21,10 @@ public final class LinkCheckerConfig {
 
   private final List<LinkCheckerExcludePattern> excludes;
 
+  /** Minimum allowed number of links checked in parallel. */
   public static final int MIN_PARALLEL = 1;
 
+  /** Maximum allowed number of links checked in parallel. */
   public static final int MAX_PARALLEL = 5;
 
   private LinkCheckerConfig(Builder builder) {
@@ -32,30 +35,65 @@ public final class LinkCheckerConfig {
     this.excludes = builder.excludes;
   }
 
+  /**
+   * Returns whether the link checker is enabled.
+   *
+   * @return {@code true} if the link checker is enabled
+   */
   public boolean isEnabled() {
     return this.enabled;
   }
 
+  /**
+   * Returns the number of links checked in parallel.
+   *
+   * @return the parallelism level
+   */
   public int getParallel() {
     return this.parallel;
   }
 
+  /**
+   * Returns the request timeout in milliseconds used when checking a link.
+   *
+   * @return the timeout in milliseconds
+   */
   public int getTimeout() {
     return this.timeout;
   }
 
+  /**
+   * Returns the scheduling strategy that triggers automatic checks.
+   *
+   * @return the scheduling strategy
+   */
   public Scheduling getScheduling() {
     return this.scheduling;
   }
 
+  /**
+   * Returns the patterns excluding matching URLs from being checked.
+   *
+   * @return the exclude patterns
+   */
   public List<LinkCheckerExcludePattern> getExcludes() {
     return Collections.unmodifiableList(this.excludes);
   }
 
+  /**
+   * Creates a new builder for {@link LinkCheckerConfig}.
+   *
+   * @return a new builder
+   */
   public static Builder builder() {
     return new Builder();
   }
 
+  /**
+   * Creates a builder pre-populated with this instance's values.
+   *
+   * @return a builder initialized from this instance
+   */
   public Builder toBuilder() {
     return new Builder(this);
   }
@@ -72,9 +110,9 @@ public final class LinkCheckerConfig {
       return false;
     }
 
-    return Objects.equals(this.enabled, that.enabled)
-        && Objects.equals(this.timeout, that.timeout)
-        && Objects.equals(this.parallel, that.parallel)
+    return this.enabled == that.enabled
+        && this.timeout == that.timeout
+        && this.parallel == that.parallel
         && Objects.equals(this.scheduling, that.scheduling)
         && Objects.equals(this.excludes, that.excludes);
   }
@@ -94,7 +132,9 @@ public final class LinkCheckerConfig {
         + "]";
   }
 
+  /** Builder for {@link LinkCheckerConfig}. */
   @JsonPOJOBuilder(withPrefix = "")
+  @SuppressWarnings("NullAway.Init")
   public static class Builder {
 
     private boolean enabled;
@@ -103,12 +143,18 @@ public final class LinkCheckerConfig {
 
     private int timeout;
 
-    public Scheduling scheduling;
+    private Scheduling scheduling;
 
     private final List<LinkCheckerExcludePattern> excludes = new ArrayList<>();
 
+    /** Creates an empty builder. */
     protected Builder() {}
 
+    /**
+     * Creates a builder pre-populated with the given instance's values.
+     *
+     * @param instance the configuration to copy values from
+     */
     protected Builder(LinkCheckerConfig instance) {
       this.enabled = instance.enabled;
       this.parallel = instance.parallel;
@@ -117,16 +163,36 @@ public final class LinkCheckerConfig {
       this.scheduling = instance.scheduling;
     }
 
+    /**
+     * Sets whether the link checker is enabled.
+     *
+     * @param enabled {@code true} to enable the link checker
+     * @return this builder for chaining
+     */
     public Builder enabled(boolean enabled) {
       this.enabled = enabled;
       return this;
     }
 
+    /**
+     * Sets the scheduling strategy.
+     *
+     * @param scheduling the scheduling strategy triggering automatic checks
+     * @return this builder for chaining
+     */
     public Builder scheduling(Scheduling scheduling) {
       this.scheduling = scheduling;
       return this;
     }
 
+    /**
+     * Sets the parallelism level.
+     *
+     * @param parallel the number of links to check in parallel; must be between {@link
+     *     #MIN_PARALLEL} and {@link #MAX_PARALLEL}
+     * @return this builder for chaining
+     * @throws IllegalArgumentException if {@code parallel} is out of range
+     */
     public Builder parallel(int parallel) {
       if (parallel < MIN_PARALLEL) {
         throw new IllegalArgumentException("Parallel must be greater than 0");
@@ -138,11 +204,23 @@ public final class LinkCheckerConfig {
       return this;
     }
 
+    /**
+     * Sets the request timeout.
+     *
+     * @param timeout the request timeout in milliseconds
+     * @return this builder for chaining
+     */
     public Builder timeout(int timeout) {
       this.timeout = timeout;
       return this;
     }
 
+    /**
+     * Adds the given exclude patterns.
+     *
+     * @param excludes the patterns excluding matching URLs from being checked
+     * @return this builder for chaining
+     */
     public Builder excludes(List<LinkCheckerExcludePattern> excludes) {
       Objects.requireNonNull(excludes);
       for (LinkCheckerExcludePattern exclude : excludes) {
@@ -151,12 +229,23 @@ public final class LinkCheckerConfig {
       return this;
     }
 
+    /**
+     * Adds a single exclude pattern.
+     *
+     * @param exclude the pattern excluding matching URLs from being checked
+     * @return this builder for chaining
+     */
     public Builder exclude(LinkCheckerExcludePattern exclude) {
       Objects.requireNonNull(exclude);
       this.excludes.add(exclude);
       return this;
     }
 
+    /**
+     * Builds a new {@link LinkCheckerConfig} instance from this builder.
+     *
+     * @return the built instance
+     */
     public LinkCheckerConfig build() {
       return new LinkCheckerConfig(this);
     }

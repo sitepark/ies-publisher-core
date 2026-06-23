@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.sitepark.ies.publisher.core.publishing.domain.entity.PublishedUrlMapping;
 import com.sitepark.ies.sharedkernel.domain.UrlMappingMode;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
@@ -48,7 +47,6 @@ class OwnerUrlMappingsTest {
   }
 
   @Test
-  @SuppressFBWarnings("NP_NULL_PARAM_DEREF_ALL_TARGETS_DANGEROUS")
   void buildWithNullOwnerId_throwsException() {
     assertThatThrownBy(
             () ->
@@ -75,7 +73,6 @@ class OwnerUrlMappingsTest {
   }
 
   @Test
-  @SuppressFBWarnings("NP_NULL_PARAM_DEREF_ALL_TARGETS_DANGEROUS")
   void buildWithNullChannelId_throwsException() {
     assertThatThrownBy(
             () ->
@@ -102,7 +99,6 @@ class OwnerUrlMappingsTest {
   }
 
   @Test
-  @SuppressFBWarnings("NP_NULL_PARAM_DEREF_ALL_TARGETS_DANGEROUS")
   void buildWithNullMappings_throwsException() {
     assertThatThrownBy(
             () ->
