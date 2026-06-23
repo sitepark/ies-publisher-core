@@ -24,6 +24,17 @@ public interface PublishedUrlMappingRepository {
   List<PublishedUrlMapping> getPublishedUrlMappingByOwner(String channelId, String ownerId);
 
   /**
+   * Returns the published URL mappings of a site within the given channel.
+   *
+   * <p>If a path is duplicated, the mapping with the highest priority is returned.
+   *
+   * @param channelId the identifier of the channel to load mappings for
+   * @param siteId the identifier of the site resource
+   * @return the mappings of the site within the channel; never {@code null}
+   */
+  List<PublishedUrlMapping> getPublishedUrlMappingBySite(String channelId, String siteId);
+
+  /**
    * Persists the given mappings as new entries.
    *
    * @param mappings the mappings to create
