@@ -1,5 +1,6 @@
 import org.jspecify.annotations.NullMarked;
 
+/** Channel management module providing channel information lookup for the IES Publisher. */
 @NullMarked
 module com.sitepark.ies.publisher.core.channel {
   exports com.sitepark.ies.publisher.core.channel.domain.entity;

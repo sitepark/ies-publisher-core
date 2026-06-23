@@ -1,5 +1,6 @@
 import org.jspecify.annotations.NullMarked;
 
+/** Core module for the IES link checker: validates external links and manages their scheduling. */
 @NullMarked
 module com.sitepark.ies.publisher.core.linkchecker {
   exports com.sitepark.ies.publisher.core.linkchecker.domain.entity;

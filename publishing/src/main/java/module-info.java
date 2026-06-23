@@ -1,5 +1,6 @@
 import org.jspecify.annotations.NullMarked;
 
+/** Core domain, ports, and use cases for managing published URL mappings of the IES Publisher. */
 @NullMarked
 module com.sitepark.ies.publisher.core.publishing {
   exports com.sitepark.ies.publisher.core.publishing.domain.entity;

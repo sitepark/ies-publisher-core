@@ -32,6 +32,11 @@ import java.util.Objects;
 public record OwnerUrlMappings(
     String ownerId, String channelId, List<PublishedUrlMapping> mappings) {
 
+  /**
+   * Validates the owner and channel identifiers, defensively copies the mapping list (which must
+   * not be {@code null} but may be empty), and enforces that every contained mapping belongs to the
+   * given owner and channel.
+   */
   public OwnerUrlMappings {
     if (ownerId == null || ownerId.isBlank()) {
       throw new IllegalArgumentException("Owner ID must not be null or blank");
@@ -81,10 +86,16 @@ public record OwnerUrlMappings(
     return mappings.isEmpty();
   }
 
+  /**
+   * Creates a new builder for {@link OwnerUrlMappings}.
+   *
+   * @return a new, empty builder
+   */
   public static Builder builder() {
     return new Builder();
   }
 
+  /** Builder for {@link OwnerUrlMappings} instances. */
   @JsonPOJOBuilder(withPrefix = "")
   @SuppressWarnings("NullAway.Init")
   public static class Builder {
@@ -92,22 +103,49 @@ public record OwnerUrlMappings(
     private String channelId;
     private List<PublishedUrlMapping> mappings = List.of();
 
+    /** Creates an empty builder. */
+    public Builder() {}
+
+    /**
+     * Sets the owner identifier.
+     *
+     * @param ownerId the identifier of the owning resource
+     * @return this builder for chaining
+     */
     public Builder ownerId(String ownerId) {
       this.ownerId = ownerId;
       return this;
     }
 
+    /**
+     * Sets the channel identifier.
+     *
+     * @param channelId the delivery channel these mappings apply to
+     * @return this builder for chaining
+     */
     public Builder channelId(String channelId) {
       this.channelId = channelId;
       return this;
     }
 
+    /**
+     * Sets the mappings, storing an immutable copy.
+     *
+     * @param mappings the complete set of mappings for this owner/channel; must not be {@code null}
+     *     but may be empty
+     * @return this builder for chaining
+     */
     public Builder mappings(List<PublishedUrlMapping> mappings) {
       Objects.requireNonNull(mappings, "mappings must not be null");
       this.mappings = List.copyOf(mappings);
       return this;
     }
 
+    /**
+     * Builds a new {@link OwnerUrlMappings} instance from this builder.
+     *
+     * @return a new, validated value object
+     */
     public OwnerUrlMappings build() {
       return new OwnerUrlMappings(ownerId, channelId, mappings);
     }

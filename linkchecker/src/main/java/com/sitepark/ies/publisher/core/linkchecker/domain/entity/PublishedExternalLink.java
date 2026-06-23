@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
 import java.util.Objects;
 
+/** An external link as published by an entity within a specific channel and section. */
 @JsonDeserialize(builder = PublishedExternalLink.Builder.class)
 public final class PublishedExternalLink {
 
@@ -22,26 +23,56 @@ public final class PublishedExternalLink {
     this.url = builder.url;
   }
 
+  /**
+   * Returns the identifier of the publishing entity.
+   *
+   * @return the entity identifier
+   */
   public String getEntity() {
     return this.entity;
   }
 
+  /**
+   * Returns the channel the link was published in.
+   *
+   * @return the channel
+   */
   public String getChannel() {
     return this.channel;
   }
 
+  /**
+   * Returns the section the link was published in.
+   *
+   * @return the section
+   */
   public String getSection() {
     return this.section;
   }
 
+  /**
+   * Returns the published URL.
+   *
+   * @return the URL
+   */
   public String getUrl() {
     return this.url;
   }
 
+  /**
+   * Creates a new builder for {@link PublishedExternalLink}.
+   *
+   * @return a new builder
+   */
   public static Builder builder() {
     return new Builder();
   }
 
+  /**
+   * Creates a builder pre-populated with this instance's values.
+   *
+   * @return a builder initialized from this instance
+   */
   public Builder toBuilder() {
     return new Builder(this);
   }
@@ -77,6 +108,7 @@ public final class PublishedExternalLink {
         + "]";
   }
 
+  /** Builder for {@link PublishedExternalLink}. */
   @JsonPOJOBuilder(withPrefix = "")
   @SuppressWarnings("NullAway.Init")
   public static final class Builder {
@@ -98,26 +130,55 @@ public final class PublishedExternalLink {
       this.url = instance.url;
     }
 
+    /**
+     * Sets the publishing entity identifier.
+     *
+     * @param entity the entity identifier
+     * @return this builder for chaining
+     */
     public Builder entity(String entity) {
       this.entity = entity;
       return this;
     }
 
+    /**
+     * Sets the channel.
+     *
+     * @param channel the channel
+     * @return this builder for chaining
+     */
     public Builder channel(String channel) {
       this.channel = channel;
       return this;
     }
 
+    /**
+     * Sets the section.
+     *
+     * @param section the section
+     * @return this builder for chaining
+     */
     public Builder section(String section) {
       this.section = section;
       return this;
     }
 
+    /**
+     * Sets the URL.
+     *
+     * @param url the published URL
+     * @return this builder for chaining
+     */
     public Builder url(String url) {
       this.url = url;
       return this;
     }
 
+    /**
+     * Builds a new {@link PublishedExternalLink} instance from this builder.
+     *
+     * @return the built link
+     */
     public PublishedExternalLink build() {
       return new PublishedExternalLink(this);
     }

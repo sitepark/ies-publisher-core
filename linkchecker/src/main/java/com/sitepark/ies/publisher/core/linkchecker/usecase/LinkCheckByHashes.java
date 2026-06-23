@@ -22,6 +22,10 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Use case that synchronously checks a selected set of links identified by their hashes and returns
+ * the individual check results.
+ */
 public class LinkCheckByHashes {
 
   private final AccessControl accessControl;
@@ -29,6 +33,14 @@ public class LinkCheckByHashes {
   private final PublishedExternalLinkRepository publishedExternalLinkRepository;
   private final LinkCheckerConfigStore linkCheckerConfigStore;
 
+  /**
+   * Creates the use case with its required dependencies.
+   *
+   * @param accessControl checks whether the current user may run the link checker
+   * @param linkChecker performs the actual check of a single link
+   * @param publishedExternalLinkRepository provides the links to check and stores their results
+   * @param linkCheckerConfigStore provides the current link checker configuration
+   */
   @Inject
   public LinkCheckByHashes(
       AccessControl accessControl,
@@ -41,7 +53,12 @@ public class LinkCheckByHashes {
     this.linkCheckerConfigStore = linkCheckerConfigStore;
   }
 
-  /** Check the links whose hashes have been specified */
+  /**
+   * Check the links whose hashes have been specified.
+   *
+   * @param hashes the hashes identifying the links to check
+   * @return the check results for the checked links
+   */
   public List<LinkCheckerResultItem> linkCheckByHashes(Collection<String> hashes) {
 
     checkAccess();

@@ -17,6 +17,10 @@ import com.sitepark.ies.publisher.core.linkchecker.service.LinkCheckerExcludesPa
 import jakarta.inject.Inject;
 import java.util.List;
 
+/**
+ * Use case that schedules a link check of the published external links as an asynchronous
+ * background execution.
+ */
 public class BackgroundLinkCheck {
 
   private final AccessControl accessControl;
@@ -25,6 +29,15 @@ public class BackgroundLinkCheck {
   private final PublishedExternalLinkRepository publishedExternalLinkRepository;
   private final LinkCheckerConfigStore linkCheckerConfigStore;
 
+  /**
+   * Creates the use case with its required dependencies.
+   *
+   * @param accessControl checks whether the current user may run the link checker
+   * @param linkChecker performs the actual check of a single link
+   * @param linkCheckerBackgroundExecutor runs the link check as a background execution
+   * @param publishedExternalLinkRepository provides the links to check and stores their results
+   * @param linkCheckerConfigStore provides the current link checker configuration
+   */
   @Inject
   public BackgroundLinkCheck(
       AccessControl accessControl,
@@ -51,6 +64,7 @@ public class BackgroundLinkCheck {
   /**
    * Check the links with the help of a background operation
    *
+   * @param filter restricts the set of links to be checked
    * @return BackgroundExecution ID that can be used to track the progress
    */
   public String backgroundLinkCheck(LinkCheckerLinkFilter filter) {

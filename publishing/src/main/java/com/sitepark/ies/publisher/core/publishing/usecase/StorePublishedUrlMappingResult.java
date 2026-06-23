@@ -18,6 +18,9 @@ import java.util.Objects;
 public record StorePublishedUrlMappingResult(
     List<PublishedUrlMapping> added, List<PublishedUrlMapping> removed) {
 
+  /**
+   * Validates that both lists are non-{@code null} and stores immutable copies of them.
+   */
   public StorePublishedUrlMappingResult {
     Objects.requireNonNull(added, "added must not be null");
     Objects.requireNonNull(removed, "removed must not be null");
