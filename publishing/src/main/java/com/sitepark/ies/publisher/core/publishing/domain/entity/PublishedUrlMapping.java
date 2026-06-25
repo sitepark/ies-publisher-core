@@ -2,6 +2,8 @@ package com.sitepark.ies.publisher.core.publishing.domain.entity;
 
 import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
 import com.sitepark.ies.sharedkernel.domain.UrlMappingMode;
+import java.util.Locale;
+import java.util.Objects;
 import org.jspecify.annotations.Nullable;
 
 /**
@@ -18,6 +20,8 @@ import org.jspecify.annotations.Nullable;
  *     not be {@code null} or blank
  * @param mode the resolution mode that defines how the path is handled; must not be {@code null}
  * @param priority the priority used to order competing mappings for the same path
+ * @param locale the language the page should be requested in; {@code null} if the mapping is not
+ *     language-specific
  */
 public record PublishedUrlMapping(
     @Nullable String id,
@@ -26,7 +30,8 @@ public record PublishedUrlMapping(
     String path,
     String ownerId,
     UrlMappingMode mode,
-    int priority) {
+    int priority,
+    @Nullable Locale locale) {
 
   /**
    * Validates that all required fields are present and non-blank and that the mapping mode is set.
@@ -67,10 +72,38 @@ public record PublishedUrlMapping(
     return mode.isForward();
   }
 
+  @Override
+  public String toString() {
+    return "PublishedUrlMapping{"
+        + "id='"
+        + id
+        + '\''
+        + ", siteId='"
+        + siteId
+        + '\''
+        + ", channelId='"
+        + channelId
+        + '\''
+        + ", path='"
+        + path
+        + '\''
+        + ", ownerId='"
+        + ownerId
+        + '\''
+        + ", mode="
+        + mode
+        + ", priority="
+        + priority
+        + ", locale="
+        + locale
+        + '}';
+  }
+
   /**
    * Returns {@code true} if this mapping is content-identical to {@code other}, ignoring the
    * technical {@code id} field. Two mappings are considered identical when {@code siteId}, {@code
-   * channelId}, {@code path}, {@code ownerId}, {@code mode}, and {@code priority} all match.
+   * channelId}, {@code path}, {@code ownerId}, {@code mode}, {@code priority}, and {@code locale}
+   * all match.
    *
    * @param other the mapping to compare against; must not be {@code null}
    * @return {@code true} if all content fields are equal
@@ -81,7 +114,8 @@ public record PublishedUrlMapping(
         && this.path.equals(other.path)
         && this.ownerId.equals(other.ownerId)
         && this.mode == other.mode
-        && this.priority == other.priority;
+        && this.priority == other.priority
+        && Objects.equals(this.locale, other.locale);
   }
 
   /**
@@ -113,6 +147,7 @@ public record PublishedUrlMapping(
     private String ownerId;
     private UrlMappingMode mode;
     private int priority;
+    private @Nullable Locale locale;
 
     /** Creates a new, empty builder. */
     public Builder() {}
@@ -125,6 +160,7 @@ public record PublishedUrlMapping(
       this.ownerId = mapping.ownerId;
       this.mode = mapping.mode;
       this.priority = mapping.priority;
+      this.locale = mapping.locale;
     }
 
     /**
@@ -205,12 +241,23 @@ public record PublishedUrlMapping(
     }
 
     /**
+     * Sets the language the page should be requested in.
+     *
+     * @param locale the language, or {@code null} if the mapping is not language-specific
+     * @return this builder for chaining
+     */
+    public Builder locale(@Nullable Locale locale) {
+      this.locale = locale;
+      return this;
+    }
+
+    /**
      * Builds a new {@link PublishedUrlMapping} instance from this builder.
      *
      * @return a new, validated mapping
      */
     public PublishedUrlMapping build() {
-      return new PublishedUrlMapping(id, siteId, channelId, path, ownerId, mode, priority);
+      return new PublishedUrlMapping(id, siteId, channelId, path, ownerId, mode, priority, locale);
     }
   }
 }

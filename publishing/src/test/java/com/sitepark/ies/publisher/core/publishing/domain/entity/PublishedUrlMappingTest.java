@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.jparams.verifier.tostring.ToStringVerifier;
 import com.sitepark.ies.sharedkernel.domain.UrlMappingMode;
+import java.util.Locale;
 import nl.jqno.equalsverifier.EqualsVerifier;
 import nl.jqno.equalsverifier.Warning;
 import org.junit.jupiter.api.Test;
@@ -121,6 +122,16 @@ class PublishedUrlMappingTest {
 
     assertThat(a.hasSameContent(b))
         .as("mappings with different priority should not be considered identical")
+        .isFalse();
+  }
+
+  @Test
+  void hasSameContent_differentLocale_returnsFalse() {
+    PublishedUrlMapping a = base().locale(Locale.GERMAN).build();
+    PublishedUrlMapping b = base().locale(Locale.ENGLISH).build();
+
+    assertThat(a.hasSameContent(b))
+        .as("mappings with different locale should not be considered identical")
         .isFalse();
   }
 
