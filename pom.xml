@@ -54,7 +54,7 @@
 		<junit.version>6.1.1</junit.version>
 		<errorprone.version>2.50.0</errorprone.version>
 		<nullaway.version>0.13.7</nullaway.version>
-		<pmd.version>7.16.0</pmd.version>
+		<pmd.version>7.26.0</pmd.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<maven.compiler.release>25</maven.compiler.release>
 		<gpg.skip>true</gpg.skip>
