@@ -51,7 +51,7 @@
 	</scm>
 
 	<properties>
-		<junit.version>6.1.1</junit.version>
+		<junit.version>6.1.2</junit.version>
 		<errorprone.version>2.50.0</errorprone.version>
 		<nullaway.version>0.13.7</nullaway.version>
 		<pmd.version>7.26.0</pmd.version>
