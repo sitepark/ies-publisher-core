@@ -12,7 +12,6 @@ import org.junit.jupiter.api.Test;
 class DailySchedulingTest {
 
   @Test
-  @SuppressWarnings("PMD.JUnitTestsShouldIncludeAssert")
   void testEquals() {
     EqualsVerifier.forClass(DailyScheduling.class).verify();
   }
