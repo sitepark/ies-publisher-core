@@ -14,13 +14,11 @@ import org.junit.jupiter.api.Test;
 class PublishedExternalLinkTest {
 
   @Test
-  @SuppressWarnings("PMD.JUnitTestsShouldIncludeAssert")
   void testEquals() {
     EqualsVerifier.forClass(PublishedExternalLink.class).verify();
   }
 
   @Test
-  @SuppressWarnings("PMD.JUnitTestsShouldIncludeAssert")
   void testToString() {
     ToStringVerifier.forClass(PublishedExternalLink.class)
         .withClassName(NameStyle.SIMPLE_NAME)

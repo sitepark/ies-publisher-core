@@ -14,13 +14,11 @@ import org.junit.jupiter.api.Test;
 class LinkCheckerResultStatisticTest {
 
   @Test
-  @SuppressWarnings("PMD.JUnitTestsShouldIncludeAssert")
   void testEquals() {
     EqualsVerifier.forClass(LinkCheckerResultStatistic.class).verify();
   }
 
   @Test
-  @SuppressWarnings("PMD.JUnitTestsShouldIncludeAssert")
   void testToString() {
     ToStringVerifier.forClass(LinkCheckerResultStatistic.class)
         .withClassName(NameStyle.SIMPLE_NAME)

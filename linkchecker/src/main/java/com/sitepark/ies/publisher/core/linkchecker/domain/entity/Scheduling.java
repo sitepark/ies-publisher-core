@@ -11,6 +11,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 @JsonSubTypes({
   @JsonSubTypes.Type(name = "daily", value = DailyScheduling.class),
 })
+@SuppressWarnings("PMD.ImplicitFunctionalInterface")
 public interface Scheduling {
   /**
    * Returns the discriminator type identifying the concrete scheduling strategy.

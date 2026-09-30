@@ -8,6 +8,7 @@ import java.util.List;
  *
  * <p>Implementations live outside this library in adapter modules.
  */
+@SuppressWarnings("PMD.ImplicitFunctionalInterface")
 public interface ChannelRepository {
 
   /**
