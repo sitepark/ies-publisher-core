@@ -50,7 +50,7 @@ public class StoreLinkCheckerConfig {
    */
   public void store(LinkCheckerConfig config) {
 
-    if (!this.accessControl.isAllowGetLinkCheckerConfig()) {
+    if (!this.accessControl.isAllowStoreLinkCheckerConfig()) {
       throw new AccessDeniedException("Not allowed to store link checker config");
     }
 

@@ -18,16 +18,28 @@ class StoreLinkCheckerConfigTest {
   @Test
   void testAccessDenied() {
     AccessControl accessControl = mock();
-    when(accessControl.isAllowGetLinkCheckerConfig()).thenReturn(false);
+    when(accessControl.isAllowStoreLinkCheckerConfig()).thenReturn(false);
     StoreLinkCheckerConfig useCase = new StoreLinkCheckerConfig(accessControl, null, null, null);
     assertThrows(AccessDeniedException.class, () -> useCase.store(null));
+  }
+
+  @Test
+  void testAccessDeniedWhenOnlyGetIsAllowed() {
+    AccessControl accessControl = mock();
+    when(accessControl.isAllowGetLinkCheckerConfig()).thenReturn(true);
+    when(accessControl.isAllowStoreLinkCheckerConfig()).thenReturn(false);
+    StoreLinkCheckerConfig useCase = new StoreLinkCheckerConfig(accessControl, null, null, null);
+    assertThrows(
+        AccessDeniedException.class,
+        () -> useCase.store(null),
+        "Store must be denied without store permission");
   }
 
   @SuppressWarnings("PMD.UnitTestContainsTooManyAsserts")
   @Test
   void testStoreLinkCheckerConfig() {
     AccessControl accessControl = mock();
-    when(accessControl.isAllowGetLinkCheckerConfig()).thenReturn(true);
+    when(accessControl.isAllowStoreLinkCheckerConfig()).thenReturn(true);
     LinkCheckerConfigStore linkCheckerConfigStore = mock();
     LinkCheckerScheduler linkCheckerScheduler = mock();
     LinkCheckerConfig config = mock();
