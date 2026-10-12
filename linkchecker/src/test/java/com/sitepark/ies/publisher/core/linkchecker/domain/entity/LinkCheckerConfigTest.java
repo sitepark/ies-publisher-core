@@ -9,6 +9,7 @@ import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.jparams.verifier.tostring.NameStyle;
 import com.jparams.verifier.tostring.ToStringVerifier;
+import com.sitepark.ies.publisher.core.linkchecker.domain.exception.InvalidLinkCheckerConfigException;
 import nl.jqno.equalsverifier.EqualsVerifier;
 import org.junit.jupiter.api.Test;
 
@@ -52,13 +53,15 @@ class LinkCheckerConfigTest {
   @Test
   void testParallelToLow() {
     assertThrows(
-        IllegalArgumentException.class, () -> LinkCheckerConfig.builder().parallel(0).build());
+        InvalidLinkCheckerConfigException.class,
+        () -> LinkCheckerConfig.builder().parallel(0).build());
   }
 
   @Test
   void testParallelToHigh() {
     assertThrows(
-        IllegalArgumentException.class, () -> LinkCheckerConfig.builder().parallel(6).build());
+        InvalidLinkCheckerConfigException.class,
+        () -> LinkCheckerConfig.builder().parallel(6).build());
   }
 
   @Test

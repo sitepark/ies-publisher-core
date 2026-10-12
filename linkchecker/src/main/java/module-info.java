@@ -4,6 +4,7 @@ import org.jspecify.annotations.NullMarked;
 @NullMarked
 module com.sitepark.ies.publisher.core.linkchecker {
   exports com.sitepark.ies.publisher.core.linkchecker.domain.entity;
+  exports com.sitepark.ies.publisher.core.linkchecker.domain.exception;
   exports com.sitepark.ies.publisher.core.linkchecker.port;
   exports com.sitepark.ies.publisher.core.linkchecker.usecase;
 

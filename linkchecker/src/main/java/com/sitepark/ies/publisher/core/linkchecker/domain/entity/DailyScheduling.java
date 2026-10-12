@@ -3,13 +3,19 @@ package com.sitepark.ies.publisher.core.linkchecker.domain.entity;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
+import com.sitepark.ies.publisher.core.linkchecker.domain.exception.InvalidLinkCheckerConfigException;
+import java.time.DateTimeException;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.Objects;
 import org.jspecify.annotations.Nullable;
 
 /** Scheduling strategy that runs the link checker once per day at a configured start time. */
 @JsonDeserialize(builder = DailyScheduling.Builder.class)
 public final class DailyScheduling implements Scheduling {
+
+  private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("HH:mm");
 
   private final @Nullable LocalTime startTime;
 
@@ -94,9 +100,35 @@ public final class DailyScheduling implements Scheduling {
      * @param hour the hour of day (0-23)
      * @param minute the minute of hour (0-59)
      * @return this builder for chaining
+     * @throws InvalidLinkCheckerConfigException if the hour or minute is out of range
      */
     public Builder startTime(int hour, int minute) {
-      this.startTime = LocalTime.of(hour, minute);
+      try {
+        this.startTime = LocalTime.of(hour, minute);
+      } catch (DateTimeException e) {
+        throw new InvalidLinkCheckerConfigException(
+            "Invalid start time: " + hour + ":" + minute, e);
+      }
+      return this;
+    }
+
+    /**
+     * Sets the start time from a string in the format {@code HH:mm}.
+     *
+     * @param time the start time, e.g. {@code 08:30}
+     * @return this builder for chaining
+     * @throws InvalidLinkCheckerConfigException if the value is null, blank or not a valid time
+     */
+    public Builder startTime(@Nullable String time) {
+      if (time == null || time.isBlank()) {
+        throw new InvalidLinkCheckerConfigException("Start time must not be blank");
+      }
+      try {
+        this.startTime = LocalTime.parse(time, TIME_FORMAT);
+      } catch (DateTimeParseException e) {
+        throw new InvalidLinkCheckerConfigException(
+            "Invalid start time '" + time + "', expected format HH:mm", e);
+      }
       return this;
     }
 

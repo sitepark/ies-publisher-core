@@ -2,6 +2,7 @@ package com.sitepark.ies.publisher.core.linkchecker.domain.entity;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
+import com.sitepark.ies.publisher.core.linkchecker.domain.exception.InvalidLinkCheckerConfigException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -191,14 +192,14 @@ public final class LinkCheckerConfig {
      * @param parallel the number of links to check in parallel; must be between {@link
      *     #MIN_PARALLEL} and {@link #MAX_PARALLEL}
      * @return this builder for chaining
-     * @throws IllegalArgumentException if {@code parallel} is out of range
+     * @throws InvalidLinkCheckerConfigException if {@code parallel} is out of range
      */
     public Builder parallel(int parallel) {
       if (parallel < MIN_PARALLEL) {
-        throw new IllegalArgumentException("Parallel must be greater than 0");
+        throw new InvalidLinkCheckerConfigException("Parallel must be greater than 0");
       }
       if (parallel > MAX_PARALLEL) {
-        throw new IllegalArgumentException("Parallel must not be greater than 5");
+        throw new InvalidLinkCheckerConfigException("Parallel must not be greater than 5");
       }
       this.parallel = parallel;
       return this;
