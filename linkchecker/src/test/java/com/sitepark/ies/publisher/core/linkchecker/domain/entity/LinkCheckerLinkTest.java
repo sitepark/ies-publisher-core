@@ -2,14 +2,12 @@ package com.sitepark.ies.publisher.core.linkchecker.domain.entity;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.jparams.verifier.tostring.NameStyle;
 import com.jparams.verifier.tostring.ToStringVerifier;
 import nl.jqno.equalsverifier.EqualsVerifier;
 import org.junit.jupiter.api.Test;
+import tools.jackson.databind.MapperFeature;
+import tools.jackson.databind.json.JsonMapper;
 
 class LinkCheckerLinkTest {
 
@@ -37,11 +35,10 @@ class LinkCheckerLinkTest {
   }
 
   @Test
-  void testSerialize() throws JsonProcessingException {
+  void testSerialize() {
 
-    ObjectMapper mapper = new ObjectMapper();
-    mapper.registerModule(new Jdk8Module());
-    mapper.registerModule(new JavaTimeModule());
+    JsonMapper mapper =
+        JsonMapper.builder().disable(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY).build();
 
     LinkCheckerLink link =
         LinkCheckerLink.builder().hash("hash").url("https://example.com").timeout(5).build();
@@ -51,22 +48,5 @@ class LinkCheckerLinkTest {
         "{\"hash\":\"hash\",\"url\":\"https://example.com\",\"timeout\":5}",
         json,
         "Unexpected JSON output");
-  }
-
-  @Test
-  void testDeserialize() throws JsonProcessingException {
-
-    ObjectMapper mapper = new ObjectMapper();
-    mapper.registerModule(new Jdk8Module());
-    mapper.registerModule(new JavaTimeModule());
-
-    String data = "{\"hash\":\"hash\",\"url\":\"https://example.com\",\"timeout\":5}";
-
-    LinkCheckerLink link = mapper.readValue(data, LinkCheckerLink.class);
-
-    LinkCheckerLink expected =
-        LinkCheckerLink.builder().hash("hash").url("https://example.com").timeout(5).build();
-
-    assertEquals(expected, link, "Unexpected link deserialization");
   }
 }

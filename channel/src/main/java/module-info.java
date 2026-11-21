@@ -9,11 +9,7 @@ module com.sitepark.ies.publisher.core.channel {
 
   requires jakarta.inject;
   requires static org.jspecify;
-  requires com.fasterxml.jackson.databind;
-  requires com.fasterxml.jackson.datatype.jdk8;
-  requires com.fasterxml.jackson.datatype.jsr310;
   requires com.sitepark.ies.sharedkernel;
 
-  opens com.sitepark.ies.publisher.core.channel.domain.entity to
-      com.fasterxml.jackson.databind;
+  opens com.sitepark.ies.publisher.core.channel.domain.entity;
 }

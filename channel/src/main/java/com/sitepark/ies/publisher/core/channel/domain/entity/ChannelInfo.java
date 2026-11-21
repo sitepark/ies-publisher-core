@@ -1,6 +1,5 @@
 package com.sitepark.ies.publisher.core.channel.domain.entity;
 
-import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
 import org.jspecify.annotations.Nullable;
 
 /**
@@ -37,7 +36,6 @@ public record ChannelInfo(String id, String name, @Nullable String description) 
   }
 
   /** Builder for incrementally assembling a {@link ChannelInfo} instance. */
-  @JsonPOJOBuilder(withPrefix = "")
   @SuppressWarnings("NullAway.Init")
   public static class Builder {
     private String id;

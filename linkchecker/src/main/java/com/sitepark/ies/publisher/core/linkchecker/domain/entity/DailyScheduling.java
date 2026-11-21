@@ -1,8 +1,6 @@
 package com.sitepark.ies.publisher.core.linkchecker.domain.entity;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
 import com.sitepark.ies.publisher.core.linkchecker.domain.exception.InvalidLinkCheckerConfigException;
 import java.time.DateTimeException;
 import java.time.LocalTime;
@@ -12,7 +10,6 @@ import java.util.Objects;
 import org.jspecify.annotations.Nullable;
 
 /** Scheduling strategy that runs the link checker once per day at a configured start time. */
-@JsonDeserialize(builder = DailyScheduling.Builder.class)
 public final class DailyScheduling implements Scheduling {
 
   private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("HH:mm");
@@ -72,7 +69,6 @@ public final class DailyScheduling implements Scheduling {
   }
 
   /** Builder for {@link DailyScheduling}. */
-  @JsonPOJOBuilder(withPrefix = "")
   public static final class Builder {
 
     private @Nullable LocalTime startTime;

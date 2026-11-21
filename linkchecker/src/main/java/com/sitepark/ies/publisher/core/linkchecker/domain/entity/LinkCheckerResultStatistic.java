@@ -1,14 +1,11 @@
 package com.sitepark.ies.publisher.core.linkchecker.domain.entity;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
 /** Aggregated statistic of a link check run, holding the number of links per status type. */
-@JsonDeserialize(builder = LinkCheckerResultStatistic.Builder.class)
 public final class LinkCheckerResultStatistic {
 
   private final List<StatusTypeCount> statusCounts;
@@ -61,7 +58,6 @@ public final class LinkCheckerResultStatistic {
   }
 
   /** Builder for {@link LinkCheckerResultStatistic}. */
-  @JsonPOJOBuilder(withPrefix = "")
   public static final class Builder {
 
     private final List<StatusTypeCount> statusCounts = new ArrayList<>();

@@ -1,6 +1,5 @@
 package com.sitepark.ies.publisher.core.publishing.domain.value;
 
-import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
 import com.sitepark.ies.publisher.core.publishing.domain.entity.PublishedUrlMapping;
 import java.util.List;
 import java.util.Objects;
@@ -96,7 +95,6 @@ public record OwnerUrlMappings(
   }
 
   /** Builder for {@link OwnerUrlMappings} instances. */
-  @JsonPOJOBuilder(withPrefix = "")
   @SuppressWarnings("NullAway.Init")
   public static class Builder {
     private String ownerId;

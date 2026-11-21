@@ -1,8 +1,6 @@
 package com.sitepark.ies.publisher.core.linkchecker.domain.entity;
 
 import com.fasterxml.jackson.annotation.JsonSetter;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -10,7 +8,6 @@ import java.util.List;
 import java.util.Objects;
 
 /** Filter that restricts checked links by search terms and result status types. */
-@JsonDeserialize(builder = LinkCheckerLinkFilter.Builder.class)
 public final class LinkCheckerLinkFilter {
 
   private final List<String> terms;
@@ -84,7 +81,6 @@ public final class LinkCheckerLinkFilter {
   }
 
   /** Builder for {@link LinkCheckerLinkFilter}. */
-  @JsonPOJOBuilder(withPrefix = "")
   public static final class Builder {
 
     private List<String> terms = new ArrayList<>();

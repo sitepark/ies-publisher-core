@@ -4,7 +4,7 @@
 
 	<groupId>com.sitepark.ies</groupId>
 	<artifactId>ies-publisher-core</artifactId>
-	<version>1.1.0-SNAPSHOT</version>
+	<version>2.0.0-SNAPSHOT</version>
 	<packaging>pom</packaging>
 	<name>IES Publisher Core</name>
 	<description>IES publisher domain and use-case implementations</description>
@@ -65,7 +65,7 @@
 			<dependency>
 				<groupId>com.sitepark.ies</groupId>
 				<artifactId>ies-shared-kernel</artifactId>
-				<version>1.1.0-SNAPSHOT</version>
+				<version>2.0.0-SNAPSHOT</version>
 			</dependency>
 			<dependency>
 				<groupId>org.apache.logging.log4j</groupId>
@@ -87,26 +87,8 @@
 				<version>2.0.1.MR</version>
 			</dependency>
 
-			<dependency>
-				<groupId>com.fasterxml.jackson.core</groupId>
-				<artifactId>jackson-databind</artifactId>
-				<version>2.23.0</version>
-			</dependency>
-
 			<!--    Java 8 Date/time    -->
-			<dependency>
-				<groupId>com.fasterxml.jackson.datatype</groupId>
-				<artifactId>jackson-datatype-jsr310</artifactId>
-				<version>2.23.0</version>
-			</dependency>
-
 			<!--    Java 8 Datatypes    -->
-			<dependency>
-				<groupId>com.fasterxml.jackson.datatype</groupId>
-				<artifactId>jackson-datatype-jdk8</artifactId>
-				<version>2.23.0</version>
-			</dependency>
-
 			<!-- Test-Dependencies -->
 			<dependency>
 				<groupId>org.junit</groupId>

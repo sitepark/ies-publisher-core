@@ -1,7 +1,5 @@
 package com.sitepark.ies.publisher.core.linkchecker.domain.entity;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -10,7 +8,6 @@ import java.util.Objects;
 /**
  * Paginated result of a link check run, holding the checked items together with paging metadata.
  */
-@JsonDeserialize(builder = LinkCheckerResult.Builder.class)
 public final class LinkCheckerResult {
 
   private final List<LinkCheckerResultItem> items;
@@ -117,7 +114,6 @@ public final class LinkCheckerResult {
   }
 
   /** Builder for {@link LinkCheckerResult}. */
-  @JsonPOJOBuilder(withPrefix = "")
   public static final class Builder {
 
     private final List<LinkCheckerResultItem> items = new ArrayList<>();

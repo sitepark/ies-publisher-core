@@ -2,14 +2,12 @@ package com.sitepark.ies.publisher.core.linkchecker.domain.entity;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.jparams.verifier.tostring.NameStyle;
 import com.jparams.verifier.tostring.ToStringVerifier;
 import nl.jqno.equalsverifier.EqualsVerifier;
 import org.junit.jupiter.api.Test;
+import tools.jackson.databind.MapperFeature;
+import tools.jackson.databind.json.JsonMapper;
 
 class LinkCheckerResultTest {
 
@@ -50,11 +48,10 @@ class LinkCheckerResultTest {
   }
 
   @Test
-  void testSerialize() throws JsonProcessingException {
+  void testSerialize() {
 
-    ObjectMapper mapper = new ObjectMapper();
-    mapper.registerModule(new Jdk8Module());
-    mapper.registerModule(new JavaTimeModule());
+    JsonMapper mapper =
+        JsonMapper.builder().disable(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY).build();
 
     LinkCheckerResult result =
         LinkCheckerResult.builder()
@@ -69,28 +66,5 @@ class LinkCheckerResultTest {
         "{\"items\":[{\"url\":\"https://example.com\",\"hash\":null,\"status\":null,\"message\":null,\"entities\":[]}],\"total\":2,\"start\":1,\"limit\":3}",
         json,
         "Unexpected JSON output");
-  }
-
-  @Test
-  void testDeserialize() throws JsonProcessingException {
-
-    ObjectMapper mapper = new ObjectMapper();
-    mapper.registerModule(new Jdk8Module());
-    mapper.registerModule(new JavaTimeModule());
-
-    String data =
-        "{\"items\":[{\"url\":\"https://example.com\",\"hash\":null,\"status\":null,\"message\":null,\"entities\":[]}],\"total\":2,\"start\":1,\"limit\":3}";
-
-    LinkCheckerResult result = mapper.readValue(data, LinkCheckerResult.class);
-
-    LinkCheckerResult expected =
-        LinkCheckerResult.builder()
-            .total(2)
-            .start(1)
-            .limit(3)
-            .item(LinkCheckerResultItem.builder().url("https://example.com").build())
-            .build();
-
-    assertEquals(expected, result, "Unexpected result deserialization");
   }
 }

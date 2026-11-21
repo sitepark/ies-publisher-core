@@ -1,11 +1,8 @@
 package com.sitepark.ies.publisher.core.linkchecker.domain.entity;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
 import java.util.Objects;
 
 /** An external link as published by an entity within a specific channel and section. */
-@JsonDeserialize(builder = PublishedExternalLink.Builder.class)
 public final class PublishedExternalLink {
 
   private final String entity;
@@ -109,7 +106,6 @@ public final class PublishedExternalLink {
   }
 
   /** Builder for {@link PublishedExternalLink}. */
-  @JsonPOJOBuilder(withPrefix = "")
   @SuppressWarnings("NullAway.Init")
   public static final class Builder {
 
