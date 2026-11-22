@@ -3,13 +3,11 @@ package com.sitepark.ies.publisher.core.linkchecker.domain.entity;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.sitepark.ies.publisher.core.linkchecker.domain.exception.InvalidLinkCheckerConfigException;
 import nl.jqno.equalsverifier.EqualsVerifier;
 import org.junit.jupiter.api.Test;
+import tools.jackson.databind.MapperFeature;
+import tools.jackson.databind.json.JsonMapper;
 
 class DailySchedulingTest {
 
@@ -36,32 +34,15 @@ class DailySchedulingTest {
   }
 
   @Test
-  void testSerialize() throws JsonProcessingException {
+  void testSerialize() {
     DailyScheduling scheduling = DailyScheduling.builder().startTime(3, 0).build();
 
-    ObjectMapper mapper = new ObjectMapper();
-    mapper.registerModule(new Jdk8Module());
-    mapper.registerModule(new JavaTimeModule());
+    JsonMapper mapper =
+        JsonMapper.builder().disable(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY).build();
 
     String json = mapper.writeValueAsString(scheduling);
     assertEquals(
         "{\"startTime\":\"03:00\",\"type\":\"daily\"}", json, "Unexpected JSON serialization");
-  }
-
-  @Test
-  void testDeserialize() throws JsonProcessingException {
-
-    ObjectMapper mapper = new ObjectMapper();
-    mapper.registerModule(new Jdk8Module());
-    mapper.registerModule(new JavaTimeModule());
-
-    String data = "{\"startTime\":\"03:00\",\"type\":\"daily\"}";
-
-    DailyScheduling scheduling = mapper.readValue(data, DailyScheduling.class);
-
-    DailyScheduling expected = DailyScheduling.builder().startTime(3, 0).build();
-
-    assertEquals(expected, scheduling, "Unexpected scheduling deserialization");
   }
 
   @Test

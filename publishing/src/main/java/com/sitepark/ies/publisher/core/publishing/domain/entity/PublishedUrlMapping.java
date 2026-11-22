@@ -1,6 +1,5 @@
 package com.sitepark.ies.publisher.core.publishing.domain.entity;
 
-import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
 import com.sitepark.ies.sharedkernel.domain.UrlMappingMode;
 import java.util.Locale;
 import java.util.Objects;
@@ -137,7 +136,6 @@ public record PublishedUrlMapping(
   }
 
   /** Builder for {@link PublishedUrlMapping} instances. */
-  @JsonPOJOBuilder(withPrefix = "")
   @SuppressWarnings("NullAway.Init")
   public static class Builder {
     private @Nullable String id;

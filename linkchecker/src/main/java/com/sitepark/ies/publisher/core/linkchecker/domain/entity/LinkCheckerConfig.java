@@ -1,7 +1,5 @@
 package com.sitepark.ies.publisher.core.linkchecker.domain.entity;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
 import com.sitepark.ies.publisher.core.linkchecker.domain.exception.InvalidLinkCheckerConfigException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -9,7 +7,6 @@ import java.util.List;
 import java.util.Objects;
 
 /** Configuration controlling whether, how and when the link checker runs. */
-@JsonDeserialize(builder = LinkCheckerConfig.Builder.class)
 public final class LinkCheckerConfig {
 
   private final boolean enabled;
@@ -134,7 +131,6 @@ public final class LinkCheckerConfig {
   }
 
   /** Builder for {@link LinkCheckerConfig}. */
-  @JsonPOJOBuilder(withPrefix = "")
   @SuppressWarnings("NullAway.Init")
   public static class Builder {
 

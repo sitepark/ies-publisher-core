@@ -1,7 +1,5 @@
 package com.sitepark.ies.publisher.core.linkchecker.domain.entity;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -12,7 +10,6 @@ import java.util.Objects;
 /**
  * Result of checking a single external link, including its status and the entities referencing it.
  */
-@JsonDeserialize(builder = LinkCheckerResultItem.Builder.class)
 public final class LinkCheckerResultItem {
   private final String url;
   private final String hash;
@@ -126,7 +123,6 @@ public final class LinkCheckerResultItem {
   }
 
   /** Builder for {@link LinkCheckerResultItem}. */
-  @JsonPOJOBuilder(withPrefix = "")
   @SuppressWarnings("NullAway.Init")
   public static final class Builder {
 

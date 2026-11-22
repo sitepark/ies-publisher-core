@@ -155,5 +155,5 @@ Always run `mvn spotless:apply` before committing to avoid formatting failures i
 
 - `com.sitepark.ies:ies-shared-kernel` — shared domain types across IES modules
 - `jakarta.inject:jakarta.inject-api` — DI annotations (`@Inject`); no Spring
-- `com.fasterxml.jackson.*` — JSON serialization (databind, jsr310, jdk8)
+- `com.fasterxml.jackson.annotation` — JSON annotations (shared by Jackson 2 and 3; no jackson-databind)
 - `org.jspecify:jspecify` — null-safety annotations (`@NullMarked`, `@Nullable`) enforced by NullAway

@@ -1,11 +1,8 @@
 package com.sitepark.ies.publisher.core.linkchecker.domain.entity;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
 import java.util.Objects;
 
 /** External link to be checked, identified by a content hash and addressed by its URL. */
-@JsonDeserialize(builder = LinkCheckerLink.Builder.class)
 public final class LinkCheckerLink {
 
   private final String hash;
@@ -88,7 +85,6 @@ public final class LinkCheckerLink {
   }
 
   /** Builder for {@link LinkCheckerLink}. */
-  @JsonPOJOBuilder(withPrefix = "")
   @SuppressWarnings("NullAway.Init")
   public static final class Builder {
 

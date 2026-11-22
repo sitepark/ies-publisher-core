@@ -2,14 +2,12 @@ package com.sitepark.ies.publisher.core.linkchecker.domain.entity;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.jparams.verifier.tostring.NameStyle;
 import com.jparams.verifier.tostring.ToStringVerifier;
 import nl.jqno.equalsverifier.EqualsVerifier;
 import org.junit.jupiter.api.Test;
+import tools.jackson.databind.MapperFeature;
+import tools.jackson.databind.json.JsonMapper;
 
 class PublishedExternalLinkTest {
 
@@ -71,34 +69,10 @@ class PublishedExternalLinkTest {
   }
 
   @Test
-  void testDeserialize() throws JsonProcessingException {
+  void testSerialize() {
 
-    ObjectMapper mapper = new ObjectMapper();
-    mapper.registerModule(new Jdk8Module());
-    mapper.registerModule(new JavaTimeModule());
-
-    String data =
-        "{\"entity\":\"123\",\"channel\":\"2\",\"section\":\"abc\",\"url\":\"https://example.com\"}";
-
-    PublishedExternalLink link = mapper.readValue(data, PublishedExternalLink.class);
-
-    PublishedExternalLink expected =
-        PublishedExternalLink.builder()
-            .url("https://example.com")
-            .channel("2")
-            .section("abc")
-            .entity("123")
-            .build();
-
-    assertEquals(expected, link, "Unexpected link deserialization");
-  }
-
-  @Test
-  void testSerialize() throws JsonProcessingException {
-
-    ObjectMapper mapper = new ObjectMapper();
-    mapper.registerModule(new Jdk8Module());
-    mapper.registerModule(new JavaTimeModule());
+    JsonMapper mapper =
+        JsonMapper.builder().disable(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY).build();
 
     PublishedExternalLink link =
         PublishedExternalLink.builder()
