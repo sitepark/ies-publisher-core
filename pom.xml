@@ -41,6 +41,7 @@
 		<module>channel</module>
 		<module>linkchecker</module>
 		<module>publishing</module>
+		<module>translation</module>
 	</modules>
 
 	<scm>
