@@ -43,6 +43,7 @@ ies-4-publisher-core/
 ├── channel/      - Channel management (GetAllChannelInfos use case)
 ├── linkchecker/  - External link validation with scheduling
 ├── publishing/   - URL mapping and publish pipeline
+├── translation/  - Statistics of the automatic translation of publications
 └── pom.xml       - Parent POM (dependency management, plugin config)
 ```
 
