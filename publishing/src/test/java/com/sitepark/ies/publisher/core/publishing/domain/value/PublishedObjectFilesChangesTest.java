@@ -69,4 +69,56 @@ class PublishedObjectFilesChangesTest {
         .as("entity")
         .isInstanceOf(IllegalArgumentException.class);
   }
+
+  private static PublishedFileEntry anEntry() {
+    return PublishedFileEntry.builder()
+        .key(PublishedFileKey.ofEntity("55", "4711"))
+        .type(PublishedFileType.OBJECT)
+        .url("/index.php")
+        .file("/www/index.php")
+        .build();
+  }
+
+  @Test
+  void anUpdateIsSomethingToWrite() {
+    assertThat(
+            new PublishedObjectFilesChanges(
+                    "55", "4711", List.of(), List.of(anEntry()), List.of(), List.of(), List.of())
+                .isEmpty())
+        .isFalse();
+  }
+
+  @Test
+  void aTrashIsSomethingToWrite() {
+    assertThat(
+            new PublishedObjectFilesChanges(
+                    "55", "4711", List.of(), List.of(), List.of(anEntry()), List.of(), List.of())
+                .isEmpty())
+        .isFalse();
+  }
+
+  @Test
+  void aDeleteIsSomethingToWrite() {
+    assertThat(
+            new PublishedObjectFilesChanges(
+                    "55", "4711", List.of(), List.of(), List.of(), List.of(anEntry()), List.of())
+                .isEmpty())
+        .isFalse();
+  }
+
+  @Test
+  void rejectsMissingOrBlankIdentifiers() {
+    assertThatThrownBy(
+            () ->
+                new PublishedObjectFilesChanges(
+                    null, "4711", List.of(), List.of(), List.of(), List.of(), List.of()))
+        .as("channel")
+        .isInstanceOf(IllegalArgumentException.class);
+    assertThatThrownBy(
+            () ->
+                new PublishedObjectFilesChanges(
+                    "55", " ", List.of(), List.of(), List.of(), List.of(), List.of()))
+        .as("entity")
+        .isInstanceOf(IllegalArgumentException.class);
+  }
 }

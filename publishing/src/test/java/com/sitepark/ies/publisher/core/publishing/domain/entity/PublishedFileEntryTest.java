@@ -110,5 +110,8 @@ class PublishedFileEntryTest {
     assertThatThrownBy(() -> complete().file(" ").build())
         .as("file")
         .isInstanceOf(IllegalArgumentException.class);
+    assertThatThrownBy(() -> complete().file(null).build())
+        .as("no file")
+        .isInstanceOf(IllegalArgumentException.class);
   }
 }

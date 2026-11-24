@@ -17,4 +17,10 @@ class PublishedFilePathTest {
     assertThatThrownBy(() -> new PublishedFilePath(PublishedFileType.OBJECT, " "))
         .isInstanceOf(IllegalArgumentException.class);
   }
+
+  @Test
+  void rejectsAMissingFile() {
+    assertThatThrownBy(() -> new PublishedFilePath(PublishedFileType.OBJECT, null))
+        .isInstanceOf(IllegalArgumentException.class);
+  }
 }

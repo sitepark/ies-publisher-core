@@ -269,4 +269,42 @@ class PublishedObjectFilesTest {
         .as("entity")
         .isInstanceOf(IllegalArgumentException.class);
   }
+
+  @Test
+  void aPublishedAndAStaleFileAtTheSamePlaceTrashOneAndDeleteTheOther() {
+    PublishedFileEntry published = image("a.png");
+    PublishedFileEntry stale = image("a.png").withStatus(PublishedFileStatus.STALE);
+    PublishedObjectFiles stored = stored(page("index.php"), published, stale);
+
+    PublishedObjectFilesChanges changes = publish(stored, page("index.php"));
+
+    assertThat(changes.trashes()).as("trashes").containsExactly(published);
+    assertThat(changes.deletes()).as("deletes").containsExactly(stale);
+  }
+
+  @Test
+  void rejectsAFileOfAnotherChannel() {
+    PublishedFileEntry foreign =
+        page("index.php").toBuilder().key(PublishedFileKey.ofEntity("56", ENTITY)).build();
+
+    assertThatThrownBy(() -> stored(foreign)).isInstanceOf(IllegalArgumentException.class);
+  }
+
+  @Test
+  void rejectsChangesToAnotherChannel() {
+    PublishedObjectFiles other = new PublishedObjectFiles("56", ENTITY, List.of());
+
+    assertThatThrownBy(() -> stored().changesTo(other))
+        .isInstanceOf(IllegalArgumentException.class);
+  }
+
+  @Test
+  void rejectsBlankIdentifiers() {
+    assertThatThrownBy(() -> new PublishedObjectFiles(null, ENTITY, List.of()))
+        .as("no channel")
+        .isInstanceOf(IllegalArgumentException.class);
+    assertThatThrownBy(() -> new PublishedObjectFiles(CHANNEL, " ", List.of()))
+        .as("blank entity")
+        .isInstanceOf(IllegalArgumentException.class);
+  }
 }
