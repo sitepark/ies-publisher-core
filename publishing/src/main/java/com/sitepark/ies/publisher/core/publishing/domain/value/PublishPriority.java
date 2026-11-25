@@ -1,15 +1,21 @@
 package com.sitepark.ies.publisher.core.publishing.domain.value;
 
-/** How urgent a publish task is. Tasks of a higher priority are handed out first. */
+/**
+ * How urgent a list of publish tasks is. Tasks of a more urgent list are handed out first; a task
+ * requested by several lists is as urgent as the most urgent of them.
+ */
 public enum PublishPriority {
 
   /**
-   * The entity has to follow a change made elsewhere: a link target moved, a list it shows changed.
-   * Visitors see outdated content until it is done.
+   * Visitors or users wait for it: entities that have to follow a change made elsewhere, or
+   * entities somebody asked for by name.
    */
-  DEPENDENCY,
+  URGENT,
 
-  /** The entity is part of a mass generation, a whole site for example. */
+  /** Due, but nobody waits: entities whose time has come, published by a schedule. */
+  NORMAL,
+
+  /** Mass generation, a whole site for example. */
   BULK;
 
   /**

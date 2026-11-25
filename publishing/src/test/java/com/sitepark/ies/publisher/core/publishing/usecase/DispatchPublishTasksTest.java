@@ -9,6 +9,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.sitepark.ies.publisher.core.publishing.domain.entity.PublishTask;
+import com.sitepark.ies.publisher.core.publishing.domain.value.PublishListOrigin;
+import com.sitepark.ies.publisher.core.publishing.domain.value.PublishListRequest;
 import com.sitepark.ies.publisher.core.publishing.domain.value.PublishOutcome;
 import com.sitepark.ies.publisher.core.publishing.domain.value.PublishPriority;
 import com.sitepark.ies.publisher.core.publishing.domain.value.PublishTaskKey;
@@ -26,8 +28,11 @@ import org.junit.jupiter.api.Test;
 class DispatchPublishTasksTest {
 
   private static final PublishTask TASK =
-      PublishTask.of(
-          new PublishTaskKey("55", "4711"), PublishTaskType.PUBLISH, PublishPriority.DEPENDENCY);
+      PublishTask.of(new PublishTaskKey("55", "4711"), PublishTaskType.PUBLISH);
+
+  private static final PublishListRequest LIST =
+      PublishListRequest.of(
+          "test", PublishListOrigin.ADMINISTRATION, PublishPriority.URGENT, List.of(TASK));
 
   private PublishSchedule schedule;
 
@@ -62,7 +67,7 @@ class DispatchPublishTasksTest {
   @Test
   void executesTheNextTaskOnAWorker() throws InterruptedException {
     when(this.executor.execute(TASK)).thenReturn(PublishOutcome.DONE);
-    this.schedule.offer(List.of(TASK));
+    this.schedule.open(LIST);
 
     this.useCase.dispatchNext();
 
@@ -72,7 +77,7 @@ class DispatchPublishTasksTest {
   @Test
   void reportsTheEndOfATask() throws InterruptedException {
     when(this.executor.execute(TASK)).thenReturn(PublishOutcome.DONE);
-    this.schedule.offer(List.of(TASK));
+    this.schedule.open(LIST);
 
     this.useCase.dispatchNext();
 
@@ -84,7 +89,7 @@ class DispatchPublishTasksTest {
   @Test
   void tellsTheListenerWhenEverythingIsDone() throws InterruptedException {
     when(this.executor.execute(TASK)).thenReturn(PublishOutcome.DONE);
-    this.schedule.offer(List.of(TASK));
+    this.schedule.open(LIST);
     this.useCase.dispatchNext();
 
     this.useCase.dispatchNext();
@@ -96,7 +101,7 @@ class DispatchPublishTasksTest {
   void tellsTheListenerAboutATaskThatBreaks() throws InterruptedException {
     IllegalStateException broken = new IllegalStateException("broken");
     when(this.executor.execute(TASK)).thenThrow(broken);
-    this.schedule.offer(List.of(TASK));
+    this.schedule.open(LIST);
 
     this.useCase.dispatchNext();
 
@@ -106,7 +111,7 @@ class DispatchPublishTasksTest {
   @Test
   void freesTheEntityOfATaskThatBreaks() throws InterruptedException {
     when(this.executor.execute(TASK)).thenThrow(new IllegalStateException("broken"));
-    this.schedule.offer(List.of(TASK));
+    this.schedule.open(LIST);
 
     this.useCase.dispatchNext();
 
@@ -118,7 +123,7 @@ class DispatchPublishTasksTest {
   @Test
   void freesTheEntityOfATaskTheWorkersRefuse() throws InterruptedException {
     doThrow(new RejectedExecutionException("shut down")).when(this.workers).submit(any());
-    this.schedule.offer(List.of(TASK));
+    this.schedule.open(LIST);
 
     this.useCase.dispatchNext();
 

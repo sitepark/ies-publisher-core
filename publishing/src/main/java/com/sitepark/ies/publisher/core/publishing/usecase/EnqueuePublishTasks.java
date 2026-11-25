@@ -1,18 +1,22 @@
 package com.sitepark.ies.publisher.core.publishing.usecase;
 
-import com.sitepark.ies.publisher.core.publishing.domain.entity.PublishTask;
-import com.sitepark.ies.publisher.core.publishing.domain.value.PublishBatchResult;
+import com.sitepark.ies.publisher.core.publishing.domain.entity.PublishList;
+import com.sitepark.ies.publisher.core.publishing.domain.value.PublishListId;
+import com.sitepark.ies.publisher.core.publishing.domain.value.PublishListRequest;
 import com.sitepark.ies.publisher.core.publishing.service.PublishSchedule;
 import jakarta.inject.Inject;
-import java.util.Collection;
 
 /**
- * Requests tasks to be carried out in the background.
+ * Requests a list of tasks to be carried out in the background.
  *
- * <p>An entity is requested as often as something changes that it depends on. A request for an
- * entity that already has a task waiting is merged into that task: the task keeps its place, takes
- * the higher priority, and becomes a follow-up if either request is one. A request for an entity
- * being published right now waits and runs afterwards.
+ * <p>Whatever is published in the background is requested as a list, be it the entities following
+ * a change or a whole site. The list says how urgent it is and which lists it comes after; it gets
+ * an id it can be watched, waited for and cancelled by.
+ *
+ * <p>An entity is requested as often as something changes that it depends on. A task for an entity
+ * that already has one waiting is merged into it: the task keeps its place, belongs to both lists
+ * and is as urgent as the more urgent one. A task for an entity being published right now waits and
+ * runs afterwards.
  */
 public class EnqueuePublishTasks {
 
@@ -29,28 +33,28 @@ public class EnqueuePublishTasks {
   }
 
   /**
-   * Requests the tasks, all at once: none of them is started before all are known.
+   * Requests the list, all at once: none of its tasks is started before all are known.
    *
-   * @param tasks the tasks, in the order they were requested
+   * @param request the list
+   * @return the id of the list
    */
-  public void enqueue(Collection<PublishTask> tasks) {
-    this.schedule.offer(tasks);
+  public PublishListId enqueue(PublishListRequest request) {
+    return this.schedule.open(request);
   }
 
   /**
-   * Requests the tasks and waits until each of them is carried out, for a caller that publishes
+   * Requests the list and waits until each of its tasks is carried out, for a caller that publishes
    * many entities and wants to know when it is done - a full generation started by hand.
    *
    * <p>The tasks run in the background like any others, as many at a time as the limits allow, and
-   * in the order of their priority: more urgent tasks requested meanwhile go first. What the tasks
+   * in the order of their priority: more urgent lists requested meanwhile go first. What the tasks
    * trigger in turn is not waited for. Interrupting the caller does not take the tasks back.
    *
-   * @param tasks the tasks, in the order they were requested
-   * @return what became of the tasks
+   * @param request the list
+   * @return the list as it ended
    * @throws InterruptedException if the thread is interrupted while waiting
    */
-  public PublishBatchResult enqueueAndAwait(Collection<PublishTask> tasks)
-      throws InterruptedException {
-    return this.schedule.offerAndAwait(tasks);
+  public PublishList enqueueAndAwait(PublishListRequest request) throws InterruptedException {
+    return this.schedule.await(this.schedule.open(request));
   }
 }

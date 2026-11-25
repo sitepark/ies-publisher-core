@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.jparams.verifier.tostring.ToStringVerifier;
-import com.sitepark.ies.publisher.core.publishing.domain.value.PublishPriority;
 import com.sitepark.ies.publisher.core.publishing.domain.value.PublishTaskKey;
 import com.sitepark.ies.publisher.core.publishing.domain.value.PublishTaskOptions;
 import com.sitepark.ies.publisher.core.publishing.domain.value.PublishTaskType;
@@ -28,22 +27,15 @@ class PublishTaskTest {
 
   @Test
   void of_createsANewTaskWithDefaults() {
-    assertThat(PublishTask.of(KEY, PublishTaskType.PUBLISH, PublishPriority.BULK))
-        .as("a new task waits for nothing, has default options and no failed attempt")
+    assertThat(PublishTask.of(KEY, PublishTaskType.PUBLISH))
+        .as("a new task has default options and no failed attempt")
         .isEqualTo(
-            new PublishTask(
-                KEY,
-                PublishTaskType.PUBLISH,
-                PublishPriority.BULK,
-                false,
-                PublishTaskOptions.DEFAULT,
-                0,
-                null));
+            new PublishTask(KEY, PublishTaskType.PUBLISH, PublishTaskOptions.DEFAULT, 0, null));
   }
 
   @Test
   void nextAttempt_countsTheAttempt() {
-    PublishTask task = PublishTask.of(KEY, PublishTaskType.PUBLISH, PublishPriority.BULK);
+    PublishTask task = PublishTask.of(KEY, PublishTaskType.PUBLISH);
 
     assertThat(task.nextAttempt().attempt())
         .as("the failed attempt should be counted")
@@ -52,17 +44,8 @@ class PublishTaskTest {
 
   @Test
   void nullKey_throwsException() {
-    assertThatThrownBy(() -> PublishTask.of(null, PublishTaskType.PUBLISH, PublishPriority.BULK))
+    assertThatThrownBy(() -> PublishTask.of(null, PublishTaskType.PUBLISH))
         .as("null key should throw an IllegalArgumentException")
-        .isInstanceOf(IllegalArgumentException.class);
-  }
-
-  @Test
-  void cleanupAsFollowUp_throwsException() {
-    PublishTask cleanup = PublishTask.of(KEY, PublishTaskType.CLEANUP, PublishPriority.BULK);
-
-    assertThatThrownBy(cleanup::asFollowUp)
-        .as("a cleanup as follow-up should throw an IllegalArgumentException")
         .isInstanceOf(IllegalArgumentException.class);
   }
 }

@@ -4,26 +4,30 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
 
+@SuppressWarnings("PMD.UnitTestContainsTooManyAsserts")
 class PublishPriorityTest {
 
   @Test
-  void dependencyIsAtLeastAsUrgentAsBulk() {
-    assertThat(PublishPriority.DEPENDENCY.isAtLeast(PublishPriority.BULK))
-        .as("a dependency should be handed out no later than bulk work")
+  void urgentIsAtLeastAsUrgentAsBulk() {
+    assertThat(PublishPriority.URGENT.isAtLeast(PublishPriority.BULK))
+        .as("urgent work should be handed out no later than bulk work")
         .isTrue();
   }
 
   @Test
-  void bulkIsLessUrgentThanDependency() {
-    assertThat(PublishPriority.BULK.isAtLeast(PublishPriority.DEPENDENCY))
-        .as("bulk work should not count as urgent as a dependency")
+  void normalLiesBetweenUrgentAndBulk() {
+    assertThat(PublishPriority.NORMAL.isAtLeast(PublishPriority.BULK))
+        .as("what is due should go before bulk work")
+        .isTrue();
+    assertThat(PublishPriority.NORMAL.isAtLeast(PublishPriority.URGENT))
+        .as("what is due should not count as urgent")
         .isFalse();
   }
 
   @Test
   void higher_returnsTheMoreUrgentPriority() {
-    assertThat(PublishPriority.BULK.higher(PublishPriority.DEPENDENCY))
+    assertThat(PublishPriority.BULK.higher(PublishPriority.NORMAL))
         .as("the more urgent of both priorities should win")
-        .isEqualTo(PublishPriority.DEPENDENCY);
+        .isEqualTo(PublishPriority.NORMAL);
   }
 }
