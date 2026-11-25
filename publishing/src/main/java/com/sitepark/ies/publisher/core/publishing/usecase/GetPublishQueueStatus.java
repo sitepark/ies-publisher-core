@@ -31,6 +31,17 @@ public class GetPublishQueueStatus {
   }
 
   /**
+   * Returns whether the calling thread is in the middle of a publication. Such a thread must not
+   * wait for tasks it enqueues - it may be the only worker - and publishes in the foreground
+   * instead.
+   *
+   * @return {@code true} if the thread publishes right now
+   */
+  public boolean isPublishingThread() {
+    return this.schedule.isPublishing();
+  }
+
+  /**
    * Returns whether a task of the type is waiting for the entity.
    *
    * @param key the entity and channel

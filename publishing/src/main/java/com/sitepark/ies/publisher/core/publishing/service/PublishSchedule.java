@@ -430,6 +430,23 @@ public class PublishSchedule {
   }
 
   /**
+   * Returns whether the calling thread is in the middle of a publication, as a worker executing a
+   * task or in the foreground. Such a thread must not wait for other tasks: it may be the only
+   * worker there is.
+   *
+   * @return {@code true} if the thread publishes right now
+   */
+  public boolean isPublishing() {
+    Thread thread = Thread.currentThread();
+    this.lock.lock();
+    try {
+      return this.holds.values().stream().anyMatch(hold -> thread.equals(hold.owner));
+    } finally {
+      this.lock.unlock();
+    }
+  }
+
+  /**
    * Returns where publishing stands.
    *
    * @return the status

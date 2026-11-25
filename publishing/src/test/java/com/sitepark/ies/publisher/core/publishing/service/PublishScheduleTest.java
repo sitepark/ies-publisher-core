@@ -507,6 +507,36 @@ class PublishScheduleTest {
         .isEqualTo(new PublishBatchResult(0, List.of(), 2));
   }
 
+  @Test
+  void aThreadInTheForegroundIsPublishing() {
+    this.schedule.enterForeground(dependency("a"));
+
+    assertThat(this.schedule.isPublishing())
+        .as("the thread is in the middle of a publication")
+        .isTrue();
+  }
+
+  @Test
+  void aWorkerExecutingATaskIsPublishing() {
+    this.schedule.offer(List.of(dependency("a")));
+    this.schedule.pollNext(FOUR);
+    this.schedule.adopt(key("a"));
+
+    assertThat(this.schedule.isPublishing())
+        .as("the thread that adopted the task executes it")
+        .isTrue();
+  }
+
+  @Test
+  void aThreadDoingNothingIsNotPublishing() {
+    this.schedule.offer(List.of(dependency("a")));
+    this.schedule.pollNext(FOUR);
+
+    assertThat(this.schedule.isPublishing())
+        .as("a task run by another thread does not make this one a publishing thread")
+        .isFalse();
+  }
+
   // --- failures
 
   @Test
