@@ -1,7 +1,9 @@
 package com.sitepark.ies.publisher.core.publishing.usecase;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -9,9 +11,11 @@ import static org.mockito.Mockito.when;
 
 import com.sitepark.ies.publisher.core.publishing.domain.entity.PublishedUrlMapping;
 import com.sitepark.ies.publisher.core.publishing.domain.value.OwnerUrlMappings;
+import com.sitepark.ies.publisher.core.publishing.domain.value.UrlMappingConflict;
 import com.sitepark.ies.publisher.core.publishing.port.PublishedUrlMappingRepository;
 import com.sitepark.ies.sharedkernel.domain.UrlMappingMode;
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -33,12 +37,12 @@ class StorePublishedUrlMappingUseCaseTest {
     PublishedUrlMapping newMapping = mapping(null, "/new-path", UrlMappingMode.FORWARD);
     when(this.repository.getPublishedUrlMappingByOwner("channel-1", "owner-1"))
         .thenReturn(List.of());
-    when(this.repository.create(List.of(newMapping))).thenReturn("100");
+    when(this.repository.createIfFree(newMapping)).thenReturn(Optional.of("100"));
 
     StorePublishedUrlMappingResult changes =
         this.useCase.storePublishedUrlMapping(ownerMappings(List.of(newMapping)));
 
-    verify(this.repository).create(List.of(newMapping));
+    verify(this.repository).createIfFree(newMapping);
     verify(this.repository, never()).remove(anyList());
     assertThat(changes.added())
         .as("newly created mapping should be in added with the assigned id")
@@ -56,7 +60,7 @@ class StorePublishedUrlMappingUseCaseTest {
         this.useCase.storePublishedUrlMapping(ownerMappings(List.of()));
 
     verify(this.repository).remove(List.of("1"));
-    verify(this.repository, never()).create(anyList());
+    verify(this.repository, never()).createIfFree(any());
     assertThat(changes.removed())
         .as("deleted mapping should be in removed")
         .containsExactly(existing);
@@ -72,7 +76,7 @@ class StorePublishedUrlMappingUseCaseTest {
     StorePublishedUrlMappingResult changes =
         this.useCase.storePublishedUrlMapping(ownerMappings(List.of(mapping)));
 
-    verify(this.repository, never()).create(anyList());
+    verify(this.repository, never()).createIfFree(any());
     verify(this.repository, never()).remove(anyList());
     assertThat(changes.isEmpty())
         .as("isEmpty() should return true for identical mappings")
@@ -87,13 +91,13 @@ class StorePublishedUrlMappingUseCaseTest {
 
     when(this.repository.getPublishedUrlMappingByOwner("channel-1", "owner-1"))
         .thenReturn(List.of(keep, toDelete));
-    when(this.repository.create(List.of(toCreate))).thenReturn("100");
+    when(this.repository.createIfFree(toCreate)).thenReturn(Optional.of("100"));
 
     StorePublishedUrlMappingResult changes =
         this.useCase.storePublishedUrlMapping(ownerMappings(List.of(keep, toCreate)));
 
     verify(this.repository).remove(List.of("2"));
-    verify(this.repository).create(List.of(toCreate));
+    verify(this.repository).createIfFree(toCreate);
     assertThat(changes.removed())
         .as("removed mapping should be in removed")
         .containsExactly(toDelete);
@@ -109,19 +113,72 @@ class StorePublishedUrlMappingUseCaseTest {
 
     when(this.repository.getPublishedUrlMappingByOwner("channel-1", "owner-1"))
         .thenReturn(List.of(oldMapping));
-    when(this.repository.create(List.of(newMapping))).thenReturn("100");
+    when(this.repository.createIfFree(newMapping)).thenReturn(Optional.of("100"));
 
     StorePublishedUrlMappingResult changes =
         this.useCase.storePublishedUrlMapping(ownerMappings(List.of(newMapping)));
 
     verify(this.repository).remove(List.of("1"));
-    verify(this.repository).create(List.of(newMapping));
+    verify(this.repository).createIfFree(newMapping);
     assertThat(changes.removed())
         .as("old mapping should be in removed on mode change")
         .containsExactly(oldMapping);
     assertThat(changes.added())
         .as("new mapping should be in added with the assigned id on mode change")
         .containsExactly(newMapping.toBuilder().id("100").build());
+  }
+
+  @Test
+  void changedMapping_givesItsPathUpBeforeTakingItAgain() {
+    PublishedUrlMapping oldMapping = mapping("1", "/path", UrlMappingMode.FORWARD);
+    PublishedUrlMapping newMapping = mapping(null, "/path", UrlMappingMode.REDIRECT_PERMANENT);
+    when(this.repository.getPublishedUrlMappingByOwner("channel-1", "owner-1"))
+        .thenReturn(List.of(oldMapping));
+    when(this.repository.createIfFree(newMapping)).thenReturn(Optional.of("100"));
+
+    this.useCase.storePublishedUrlMapping(ownerMappings(List.of(newMapping)));
+
+    var order = inOrder(this.repository);
+    order.verify(this.repository).remove(List.of("1"));
+    order.verify(this.repository).createIfFree(newMapping);
+  }
+
+  @Test
+  void pathHeldByAnotherOwner_isReportedAsConflict() {
+    PublishedUrlMapping wanted = mapping(null, "/taken", UrlMappingMode.FORWARD);
+    PublishedUrlMapping held =
+        mapping("7", "/taken", UrlMappingMode.FORWARD).toBuilder().ownerId("owner-2").build();
+    when(this.repository.getPublishedUrlMappingByOwner("channel-1", "owner-1"))
+        .thenReturn(List.of());
+    when(this.repository.createIfFree(wanted)).thenReturn(Optional.empty());
+    when(this.repository.getPublishedUrlMappingByPath("channel-1", wanted.siteId(), "/taken"))
+        .thenReturn(Optional.of(held));
+
+    StorePublishedUrlMappingResult changes =
+        this.useCase.storePublishedUrlMapping(ownerMappings(List.of(wanted)));
+
+    assertThat(changes.conflicts())
+        .as("the mapping is reported with the owner holding its path")
+        .containsExactly(new UrlMappingConflict(wanted, "owner-2"));
+    assertThat(changes.added()).as("nothing was stored for the taken path").isEmpty();
+    assertThat(changes.isEmpty()).as("a conflict is no change of the mappings").isTrue();
+  }
+
+  @Test
+  void pathGivenUpWhileLookingForItsHolder_isReportedWithoutHolder() {
+    PublishedUrlMapping wanted = mapping(null, "/taken", UrlMappingMode.FORWARD);
+    when(this.repository.getPublishedUrlMappingByOwner("channel-1", "owner-1"))
+        .thenReturn(List.of());
+    when(this.repository.createIfFree(wanted)).thenReturn(Optional.empty());
+    when(this.repository.getPublishedUrlMappingByPath("channel-1", wanted.siteId(), "/taken"))
+        .thenReturn(Optional.empty());
+
+    StorePublishedUrlMappingResult changes =
+        this.useCase.storePublishedUrlMapping(ownerMappings(List.of(wanted)));
+
+    assertThat(changes.conflicts())
+        .as("the conflict is reported although its holder is gone already")
+        .containsExactly(new UrlMappingConflict(wanted, null));
   }
 
   @Test
@@ -132,7 +189,7 @@ class StorePublishedUrlMappingUseCaseTest {
     StorePublishedUrlMappingResult changes =
         this.useCase.storePublishedUrlMapping(ownerMappings(List.of()));
 
-    verify(this.repository, never()).create(anyList());
+    verify(this.repository, never()).createIfFree(any());
     verify(this.repository, never()).remove(anyList());
     assertThat(changes.isEmpty())
         .as("isEmpty() should return true when there are no existing and no new mappings")
@@ -146,13 +203,13 @@ class StorePublishedUrlMappingUseCaseTest {
 
     when(this.repository.getPublishedUrlMappingByOwner("channel-1", "owner-1"))
         .thenReturn(List.of(oldMapping));
-    when(this.repository.create(List.of(newMapping))).thenReturn("100");
+    when(this.repository.createIfFree(newMapping)).thenReturn(Optional.of("100"));
 
     StorePublishedUrlMappingResult changes =
         this.useCase.storePublishedUrlMapping(ownerMappings(List.of(newMapping)));
 
     verify(this.repository).remove(List.of("1"));
-    verify(this.repository).create(List.of(newMapping));
+    verify(this.repository).createIfFree(newMapping);
     assertThat(changes.removed())
         .as("old mapping should be in removed on priority change")
         .containsExactly(oldMapping);
