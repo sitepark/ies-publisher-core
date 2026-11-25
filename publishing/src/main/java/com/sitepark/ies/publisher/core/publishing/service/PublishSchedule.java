@@ -1,6 +1,7 @@
 package com.sitepark.ies.publisher.core.publishing.service;
 
 import com.sitepark.ies.publisher.core.publishing.domain.entity.PublishTask;
+import com.sitepark.ies.publisher.core.publishing.domain.value.PublishBatchResult;
 import com.sitepark.ies.publisher.core.publishing.domain.value.PublishOutcome;
 import com.sitepark.ies.publisher.core.publishing.domain.value.PublishPriority;
 import com.sitepark.ies.publisher.core.publishing.domain.value.PublishQueueStatus;
@@ -13,11 +14,13 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableSet;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
@@ -153,6 +156,39 @@ public class PublishSchedule {
   }
 
   /**
+   * Requests tasks, all at once, and waits until each of them is carried out - whatever else is
+   * requested meanwhile. The tasks are counted, not the queue watched: a task merged into one that
+   * was waiting already is done when that one is, a task whose entity was being published is done
+   * after the run that follows, and a task a foreground publication took over is done with it.
+   *
+   * <p>Interrupting the waiting thread does not take the tasks back.
+   *
+   * @param tasks the tasks, in the order they were requested
+   * @return what became of the tasks
+   * @throws InterruptedException if the thread is interrupted while waiting
+   */
+  public PublishBatchResult offerAndAwait(Collection<PublishTask> tasks)
+      throws InterruptedException {
+    Ticket ticket = new Ticket();
+    this.lock.lockInterruptibly();
+    try {
+      for (PublishTask task : tasks) {
+        attach(ticket, this.add(task));
+      }
+      if (!tasks.isEmpty()) {
+        this.drainedAnnounced = false;
+        this.changed.signalAll();
+      }
+      while (ticket.open > 0) {
+        this.changed.await();
+      }
+      return new PublishBatchResult(ticket.done, ticket.failed, ticket.cancelled);
+    } finally {
+      this.lock.unlock();
+    }
+  }
+
+  /**
    * Waits for the next task that may run in the background and marks its entity as being
    * published. Whoever takes a task has to report its end with {@link #completed}.
    *
@@ -247,12 +283,12 @@ public class PublishSchedule {
       ahead(this.runningAhead, hold.priority).remove(hold.sequence);
       this.processed++;
       if (outcome == PublishOutcome.RETRY && task.attempt() < MAX_RETRIES) {
-        if (!this.waiting.containsKey(SlotKey.of(task))) {
-          this.add(task.nextAttempt());
-          this.drainedAnnounced = false;
+        this.tryAgain(hold, task);
+      } else {
+        if (outcome != PublishOutcome.DONE) {
+          this.failed++;
         }
-      } else if (outcome != PublishOutcome.DONE) {
-        this.failed++;
+        settle(hold, outcome == PublishOutcome.DONE);
       }
       this.changed.signalAll();
     } finally {
@@ -283,10 +319,13 @@ public class PublishSchedule {
         this.changed.awaitUninterruptibly();
       }
       this.stopWaitingInForeground(key);
-      this.holds.put(key, Hold.ofForeground(thread));
+      Hold hold = Hold.ofForeground(thread, task);
+      this.holds.put(key, hold);
       Entry covered = this.waiting.get(SlotKey.of(task));
       if (covered != null && covered.barrier == 0 && task.type() != PublishTaskType.CLEANUP) {
         this.remove(covered);
+        // whoever waits for the task is served by the foreground
+        hold.tickets.addAll(covered.tickets);
       }
     } finally {
       this.lock.unlock();
@@ -297,8 +336,9 @@ public class PublishSchedule {
    * Ends a foreground publication.
    *
    * @param key the entity and channel
+   * @param succeeded whether the publication ended without an error
    */
-  public void leaveForeground(PublishTaskKey key) {
+  public void leaveForeground(PublishTaskKey key, boolean succeeded) {
     this.lock.lock();
     try {
       Hold hold = this.holds.get(key);
@@ -314,6 +354,7 @@ public class PublishSchedule {
       }
       this.holds.remove(key);
       this.foregroundActive--;
+      settle(hold, succeeded);
       this.changed.signalAll();
     } finally {
       this.lock.unlock();
@@ -355,6 +396,12 @@ public class PublishSchedule {
   public void clear() {
     this.lock.lock();
     try {
+      for (Entry entry : this.waiting.values()) {
+        for (Ticket ticket : entry.tickets) {
+          ticket.open--;
+          ticket.cancelled++;
+        }
+      }
       this.waiting.clear();
       this.queue.clear();
       this.cleanups.clear();
@@ -411,7 +458,43 @@ public class PublishSchedule {
     }
   }
 
-  private void add(PublishTask task) {
+  /**
+   * Requests a task again after an attempt that failed for a passing reason, unless a newer request
+   * for its entity is waiting already. Whoever waits for the task waits for what follows it.
+   */
+  private void tryAgain(Hold hold, PublishTask task) {
+    Entry next = this.waiting.get(SlotKey.of(task));
+    if (next == null) {
+      next = this.add(task.nextAttempt());
+      this.drainedAnnounced = false;
+    }
+    for (Ticket ticket : hold.tickets) {
+      if (!next.tickets.add(ticket)) {
+        ticket.open--;
+      }
+    }
+  }
+
+  /** Makes the ticket wait for the task, once: tasks merged into one count as one. */
+  private static void attach(Ticket ticket, Entry entry) {
+    if (entry.tickets.add(ticket)) {
+      ticket.open++;
+    }
+  }
+
+  /** The work is over for good: tells everybody waiting for it. */
+  private static void settle(Hold hold, boolean succeeded) {
+    for (Ticket ticket : hold.tickets) {
+      ticket.open--;
+      if (succeeded) {
+        ticket.done++;
+      } else {
+        ticket.failed.add(hold.task);
+      }
+    }
+  }
+
+  private Entry add(PublishTask task) {
     this.sequence++;
     long requested = this.sequence;
     long barrier = task.followUp() ? requested : 0;
@@ -426,6 +509,7 @@ public class PublishSchedule {
       entry.task = merge(entry.task, task, entry.barrier > 0);
     }
     this.index(entry);
+    return entry;
   }
 
   /** One task for two requests: the younger says what to do, neither loses what it asked for. */
@@ -550,6 +634,9 @@ public class PublishSchedule {
     /** The sequence the task must not overtake, 0 if it waits for nothing. */
     private long barrier;
 
+    /** Who waits for the task to be carried out. */
+    private final Set<Ticket> tickets = new HashSet<>();
+
     private Entry(PublishTask task, long sequence, long barrier) {
       this.task = task;
       this.sequence = sequence;
@@ -562,6 +649,11 @@ public class PublishSchedule {
 
     private final boolean foreground;
 
+    private final PublishTask task;
+
+    /** Who waits for the publication to end. */
+    private final Set<Ticket> tickets = new HashSet<>();
+
     private final PublishPriority priority;
 
     private final long sequence;
@@ -572,20 +664,40 @@ public class PublishSchedule {
     private int depth = OUTERMOST;
 
     private Hold(
-        boolean foreground, PublishPriority priority, long sequence, @Nullable Thread owner) {
+        boolean foreground,
+        PublishTask task,
+        PublishPriority priority,
+        long sequence,
+        @Nullable Thread owner) {
       this.foreground = foreground;
+      this.task = task;
       this.priority = priority;
       this.sequence = sequence;
       this.owner = owner;
     }
 
     private static Hold ofBackground(Entry entry) {
-      return new Hold(false, entry.task.priority(), entry.sequence, null);
+      Hold hold = new Hold(false, entry.task, entry.task.priority(), entry.sequence, null);
+      hold.tickets.addAll(entry.tickets);
+      return hold;
     }
 
-    private static Hold ofForeground(Thread owner) {
-      return new Hold(true, PublishPriority.DEPENDENCY, 0, owner);
+    private static Hold ofForeground(Thread owner, PublishTask task) {
+      return new Hold(true, task, PublishPriority.DEPENDENCY, 0, owner);
     }
+  }
+
+  /** Tasks requested together by somebody waiting for all of them. */
+  private static final class Ticket {
+
+    /** The tasks not carried out yet. */
+    private int open;
+
+    private int done;
+
+    private int cancelled;
+
+    private final List<PublishTask> failed = new ArrayList<>();
   }
 
   /** The place a waiting task takes: one per entity, channel and kind of work. */

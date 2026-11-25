@@ -3,6 +3,7 @@ package com.sitepark.ies.publisher.core.publishing.service;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.sitepark.ies.publisher.core.publishing.domain.entity.PublishTask;
+import com.sitepark.ies.publisher.core.publishing.domain.value.PublishBatchResult;
 import com.sitepark.ies.publisher.core.publishing.domain.value.PublishOutcome;
 import com.sitepark.ies.publisher.core.publishing.domain.value.PublishPriority;
 import com.sitepark.ies.publisher.core.publishing.domain.value.PublishTaskKey;
@@ -287,7 +288,7 @@ class PublishScheduleTest {
   void foregroundTakesOverTheWaitingTaskOfItsEntity() {
     this.schedule.offer(List.of(dependency("a")));
     this.schedule.enterForeground(dependency("a"));
-    this.schedule.leaveForeground(key("a"));
+    this.schedule.leaveForeground(key("a"), true);
 
     assertThat(this.schedule.pollNext(FOUR))
         .as("what the foreground published needs no background task")
@@ -298,7 +299,7 @@ class PublishScheduleTest {
   void foregroundLeavesAFollowUpWaiting() {
     this.schedule.offer(List.of(dependency("a").asFollowUp()));
     this.schedule.enterForeground(dependency("a"));
-    this.schedule.leaveForeground(key("a"));
+    this.schedule.leaveForeground(key("a"), true);
 
     assertThat(this.next(FOUR))
         .as("the follow-up waits for something the foreground could not know")
@@ -309,7 +310,7 @@ class PublishScheduleTest {
   void foregroundLeavesTheCleanupWaiting() {
     this.schedule.offer(List.of(cleanup("a")));
     this.schedule.enterForeground(dependency("a"));
-    this.schedule.leaveForeground(key("a"));
+    this.schedule.leaveForeground(key("a"), true);
 
     assertThat(this.schedule.status().waiting()).as("the cleanup is still due").isEqualTo(1);
   }
@@ -324,7 +325,7 @@ class PublishScheduleTest {
         .as("only one background task may run while a user waits")
         .isEmpty();
 
-    this.schedule.leaveForeground(key("x"));
+    this.schedule.leaveForeground(key("x"), true);
 
     assertThat(this.next(FOUR)).as("the full limit applies again").isEqualTo("b");
   }
@@ -343,7 +344,7 @@ class PublishScheduleTest {
   void foregroundMayPublishItsEntityAgainFromWithin() {
     this.schedule.enterForeground(dependency("a"));
     this.schedule.enterForeground(dependency("a"));
-    this.schedule.leaveForeground(key("a"));
+    this.schedule.leaveForeground(key("a"), true);
 
     assertThat(this.schedule.status().foreground())
         .as("the outer publication is still running")
@@ -384,6 +385,126 @@ class PublishScheduleTest {
     assertThat(this.schedule.status().waiting())
         .as("and takes over the task requested meanwhile")
         .isZero();
+  }
+
+  // --- waiting for tasks
+
+  @Test
+  void whoWaitsForTasksGoesOnOnceTheyAreDone() {
+    CompletableFuture<PublishBatchResult> waiting = this.offerAndAwait(bulk("a"), bulk("b"));
+    await(() -> this.schedule.status().waiting() == 2);
+    PublishTask first = this.schedule.pollNext(FOUR).orElseThrow();
+    PublishTask second = this.schedule.pollNext(FOUR).orElseThrow();
+    this.schedule.completed(first, PublishOutcome.DONE);
+
+    assertThat(waiting).as("one task is still running").isNotDone();
+
+    this.schedule.completed(second, PublishOutcome.DONE);
+
+    assertThat(waiting)
+        .as("both tasks are done")
+        .succeedsWithin(Duration.ofSeconds(5))
+        .isEqualTo(new PublishBatchResult(2, List.of(), 0));
+  }
+
+  @Test
+  void whoWaitsIsNotHeldUpByTasksOfOthers() {
+    CompletableFuture<PublishBatchResult> waiting = this.offerAndAwait(dependency("a"));
+    await(() -> this.schedule.status().waiting() == 1);
+    this.schedule.offer(List.of(bulk("other")));
+    this.schedule.completed(this.schedule.pollNext(FOUR).orElseThrow(), PublishOutcome.DONE);
+
+    assertThat(waiting)
+        .as("the task of somebody else is still waiting, the own one is done")
+        .succeedsWithin(Duration.ofSeconds(5));
+  }
+
+  @Test
+  void taskMergedIntoAWaitingOneIsDoneWithIt() {
+    // revoking waits; the request to publish is merged into it and decides what is done
+    this.schedule.offer(List.of(task("a", PublishTaskType.DEPUBLISH, PublishPriority.DEPENDENCY)));
+    CompletableFuture<PublishBatchResult> waiting = this.offerAndAwait(bulk("a"));
+    await(() -> this.schedule.isWaiting(key("a"), PublishTaskType.PUBLISH));
+    this.schedule.completed(this.schedule.pollNext(FOUR).orElseThrow(), PublishOutcome.DONE);
+
+    assertThat(waiting)
+        .as("the one run serves the request waited for as well")
+        .succeedsWithin(Duration.ofSeconds(5))
+        .isEqualTo(new PublishBatchResult(1, List.of(), 0));
+  }
+
+  @Test
+  void taskForAnEntityBeingPublishedIsDoneAfterTheNextRun() {
+    this.schedule.offer(List.of(dependency("a")));
+    PublishTask running = this.schedule.pollNext(FOUR).orElseThrow();
+    CompletableFuture<PublishBatchResult> waiting = this.offerAndAwait(dependency("a"));
+    await(() -> this.schedule.status().waiting() == 1);
+    this.schedule.completed(running, PublishOutcome.DONE);
+
+    assertThat(waiting).as("the run that was under way may have read the old state").isNotDone();
+
+    this.schedule.completed(this.schedule.pollNext(FOUR).orElseThrow(), PublishOutcome.DONE);
+
+    assertThat(waiting)
+        .as("the run that followed serves the request")
+        .succeedsWithin(Duration.ofSeconds(5));
+  }
+
+  @Test
+  void taskTakenOverByTheForegroundIsDoneWithIt() {
+    CompletableFuture<PublishBatchResult> waiting = this.offerAndAwait(dependency("a"));
+    await(() -> this.schedule.status().waiting() == 1);
+    this.schedule.enterForeground(dependency("a"));
+
+    assertThat(waiting).as("the foreground is still publishing").isNotDone();
+
+    this.schedule.leaveForeground(key("a"), true);
+
+    assertThat(waiting)
+        .as("the foreground did what was waited for")
+        .succeedsWithin(Duration.ofSeconds(5))
+        .isEqualTo(new PublishBatchResult(1, List.of(), 0));
+  }
+
+  @Test
+  void whoWaitsLearnsWhichTasksFailed() {
+    CompletableFuture<PublishBatchResult> waiting = this.offerAndAwait(dependency("a"));
+    await(() -> this.schedule.status().waiting() == 1);
+    PublishTask task = this.schedule.pollNext(FOUR).orElseThrow();
+    this.schedule.completed(task, PublishOutcome.FAILED);
+
+    assertThat(waiting)
+        .as("the failed task is reported")
+        .succeedsWithin(Duration.ofSeconds(5))
+        .isEqualTo(new PublishBatchResult(0, List.of(task), 0));
+  }
+
+  @Test
+  void whoWaitsWaitsForTheSecondAttempt() {
+    CompletableFuture<PublishBatchResult> waiting = this.offerAndAwait(dependency("a"));
+    await(() -> this.schedule.status().waiting() == 1);
+    this.schedule.completed(this.schedule.pollNext(FOUR).orElseThrow(), PublishOutcome.RETRY);
+
+    assertThat(waiting).as("the task is tried again").isNotDone();
+
+    this.schedule.completed(this.schedule.pollNext(FOUR).orElseThrow(), PublishOutcome.DONE);
+
+    assertThat(waiting)
+        .as("the second attempt did it")
+        .succeedsWithin(Duration.ofSeconds(5))
+        .isEqualTo(new PublishBatchResult(1, List.of(), 0));
+  }
+
+  @Test
+  void whoWaitsLearnsThatTheQueueWasCleared() {
+    CompletableFuture<PublishBatchResult> waiting = this.offerAndAwait(bulk("a"), bulk("b"));
+    await(() -> this.schedule.status().waiting() == 2);
+    this.schedule.clear();
+
+    assertThat(waiting)
+        .as("dropped tasks do not keep their requester waiting")
+        .succeedsWithin(Duration.ofSeconds(5))
+        .isEqualTo(new PublishBatchResult(0, List.of(), 2));
   }
 
   // --- failures
@@ -519,6 +640,18 @@ class PublishScheduleTest {
   }
 
   // --- helpers
+
+  private CompletableFuture<PublishBatchResult> offerAndAwait(PublishTask... tasks) {
+    return CompletableFuture.supplyAsync(
+        () -> {
+          try {
+            return this.schedule.offerAndAwait(List.of(tasks));
+          } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException(e);
+          }
+        });
+  }
 
   private String next(PublishingLimits limits) {
     return this.schedule.pollNext(limits).map(task -> task.key().entityId()).orElse("nothing");

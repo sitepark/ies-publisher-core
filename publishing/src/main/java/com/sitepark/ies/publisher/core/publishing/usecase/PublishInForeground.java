@@ -37,10 +37,12 @@ public class PublishInForeground {
   public <E extends Exception> void publish(PublishTask task, ForegroundPublication<E> publication)
       throws E {
     this.schedule.enterForeground(task);
+    boolean succeeded = false;
     try {
       publication.publish();
+      succeeded = true;
     } finally {
-      this.schedule.leaveForeground(task.key());
+      this.schedule.leaveForeground(task.key(), succeeded);
     }
   }
 }
