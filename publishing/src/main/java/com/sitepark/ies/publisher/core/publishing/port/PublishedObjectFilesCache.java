@@ -3,6 +3,7 @@ package com.sitepark.ies.publisher.core.publishing.port;
 import com.sitepark.ies.publisher.core.publishing.domain.entity.PublishedObjectFiles;
 import com.sitepark.ies.publisher.core.publishing.domain.value.PublishedFilePath;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 /**
  * Keeps the files of entities as they were last read or written, so a link to an entity's file is
@@ -21,6 +22,21 @@ public interface PublishedObjectFilesCache {
    * @return the files, or empty if they are not kept
    */
   Optional<PublishedObjectFiles> get(String channelId, String entityId);
+
+  /**
+   * Returns the files of the entity in the channel, reading and keeping them if they are not kept.
+   *
+   * <p>Reading and keeping are one step: whoever keeps or forgets the files of the entity meanwhile
+   * waits for it. Otherwise files read just before a generation stored new ones could be kept after
+   * it, and stay outdated.
+   *
+   * @param channelId the channel
+   * @param entityId the entity
+   * @param loader reads the files as they are stored now; called only if they are not kept
+   * @return the files
+   */
+  PublishedObjectFiles getOrLoad(
+      String channelId, String entityId, Supplier<PublishedObjectFiles> loader);
 
   /**
    * Keeps the files of an entity as they are stored now.
