@@ -9,8 +9,11 @@ import com.sitepark.ies.publisher.core.publishing.domain.value.PublishPriority;
 import com.sitepark.ies.publisher.core.publishing.domain.value.PublishQueueStatus;
 import com.sitepark.ies.publisher.core.publishing.domain.value.PublishTaskKey;
 import com.sitepark.ies.publisher.core.publishing.domain.value.PublishTaskType;
+import com.sitepark.ies.publisher.core.publishing.port.PublishListRetention;
 import com.sitepark.ies.publisher.core.publishing.port.PublishingLimits;
+import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
@@ -91,9 +94,6 @@ public class PublishSchedule {
   /** The depth of a publication that is not nested in another one of the same entity. */
   private static final int OUTERMOST = 1;
 
-  /** How many finished lists are kept to be looked at. */
-  private static final int KEPT_FINISHED_LISTS = 200;
-
   private static final DateTimeFormatter ID_TIME =
       DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss").withZone(ZoneOffset.UTC);
 
@@ -130,6 +130,9 @@ public class PublishSchedule {
   /** The lists that are over, youngest first. */
   private final Deque<ListState> finishedLists = new ArrayDeque<>();
 
+  /** How many of the lists that are over are kept, and for how long. */
+  private final PublishListRetention retention;
+
   /** Makes the ids of lists unique across restarts: the time this schedule was created. */
   private final String idPrefix = ID_TIME.format(Instant.now());
 
@@ -150,6 +153,21 @@ public class PublishSchedule {
 
   /** Whether the dispatcher was told that everything is done, since the last request. */
   private boolean drainedAnnounced = true;
+
+  /** Creates a schedule that keeps the lists that are over as {@link PublishListRetention#DEFAULT}. */
+  public PublishSchedule() {
+    this(PublishListRetention.DEFAULT);
+  }
+
+  /**
+   * Creates a schedule.
+   *
+   * @param retention how many of the lists that are over are kept, and for how long
+   */
+  @Inject
+  public PublishSchedule(PublishListRetention retention) {
+    this.retention = retention;
+  }
 
   // --- lists
 
@@ -276,6 +294,7 @@ public class PublishSchedule {
   public List<PublishList> lists() {
     this.lock.lock();
     try {
+      this.dropExpiredLists();
       List<PublishList> all = new ArrayList<>(this.openLists.size() + this.finishedLists.size());
       this.openLists.values().forEach(list -> all.add(list.snapshot()));
       this.finishedLists.forEach(list -> all.add(list.snapshot()));
@@ -637,10 +656,26 @@ public class PublishSchedule {
 
   private void finish(ListState list) {
     list.finished = Instant.now();
+    list.releaseTasks();
     this.openLists.remove(list.id);
     this.finishedLists.addFirst(list);
-    while (this.finishedLists.size() > KEPT_FINISHED_LISTS) {
-      this.finishedLists.removeLast();
+    this.dropExpiredLists();
+  }
+
+  /** Forgets the lists over the number or the age to be kept; the oldest are last. */
+  private void dropExpiredLists() {
+    int kept = Math.max(0, this.retention.keptLists());
+    Duration lifetime = this.retention.lifetime();
+    Instant oldest = Instant.now().minus(lifetime);
+    while (!this.finishedLists.isEmpty()) {
+      ListState last = this.finishedLists.getLast();
+      Instant finished = last.finished;
+      boolean tooOld = finished != null && !finished.isAfter(oldest);
+      if (this.finishedLists.size() > kept || tooOld) {
+        this.finishedLists.removeLast();
+      } else {
+        break;
+      }
     }
   }
 
@@ -922,6 +957,9 @@ public class PublishSchedule {
     private void add(@Nullable ListState list) {
       if (list != null && this.lists.add(list)) {
         list.running++;
+        if (list.started == null) {
+          list.started = Instant.now();
+        }
       }
     }
   }
@@ -931,7 +969,8 @@ public class PublishSchedule {
 
     private final PublishListId id;
 
-    private final PublishListRequest request;
+    /** What was asked for; once the list is over, without the tasks, which are of no use then. */
+    private PublishListRequest request;
 
     private final PublishPriority priority;
 
@@ -942,6 +981,9 @@ public class PublishSchedule {
     private final Set<ListState> after = new HashSet<>();
 
     private final Instant created = Instant.now();
+
+    /** When the first task of the list started, or {@code null} while none has. */
+    private @Nullable Instant started;
 
     private @Nullable Instant finished;
 
@@ -965,6 +1007,19 @@ public class PublishSchedule {
       this.foreground = foreground;
     }
 
+    /** Drops the tasks of the request, keeping what describes the list. */
+    private void releaseTasks() {
+      this.request =
+          new PublishListRequest(
+              this.request.name(),
+              this.request.origin(),
+              this.request.cause(),
+              this.request.priority(),
+              this.request.after(),
+              List.of());
+      this.after.clear();
+    }
+
     private PublishList snapshot() {
       return new PublishList(
           this.id,
@@ -980,6 +1035,7 @@ public class PublishSchedule {
           this.failed,
           this.cancelled,
           this.created,
+          this.started,
           this.finished);
     }
   }

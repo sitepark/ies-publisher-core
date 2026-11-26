@@ -13,6 +13,7 @@ import com.sitepark.ies.publisher.core.publishing.domain.value.PublishPriority;
 import com.sitepark.ies.publisher.core.publishing.domain.value.PublishTaskKey;
 import com.sitepark.ies.publisher.core.publishing.domain.value.PublishTaskOptions;
 import com.sitepark.ies.publisher.core.publishing.domain.value.PublishTaskType;
+import com.sitepark.ies.publisher.core.publishing.port.PublishListRetention;
 import com.sitepark.ies.publisher.core.publishing.port.PublishingLimits;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -516,6 +517,50 @@ class PublishScheduleTest {
   }
 
   @Test
+  void keepsOnlyTheYoungestListsThatAreOver() {
+    this.schedule = new PublishSchedule(new Retention(2, Duration.ofHours(1)));
+    this.urgent();
+    PublishListId second = this.urgent();
+    PublishListId third = this.urgent();
+
+    assertThat(this.schedule.lists())
+        .as("the oldest list over the number is forgotten")
+        .extracting(PublishList::id)
+        .containsExactly(third, second);
+  }
+
+  @Test
+  void forgetsAListOnceItIsOverForLongerThanTheLifetime() throws InterruptedException {
+    this.schedule = new PublishSchedule(new Retention(20, Duration.ofMillis(20)));
+    this.urgent();
+    Thread.sleep(60);
+
+    assertThat(this.schedule.lists()).as("the list is too old").isEmpty();
+  }
+
+  @Test
+  void keepsAListThatIsStillGoingOnWhateverItsAge() throws InterruptedException {
+    this.schedule = new PublishSchedule(new Retention(0, Duration.ofMillis(1)));
+    this.urgent("a");
+    Thread.sleep(20);
+
+    assertThat(this.schedule.lists()).as("a list that is not over is no matter of age").hasSize(1);
+  }
+
+  @Test
+  void aListThatIsOverKeepsItsCountsButNotItsTasks() {
+    PublishListId id = this.urgent("a", "b");
+    this.schedule.completed(this.schedule.pollNext(FOUR).orElseThrow(), PublishOutcome.DONE);
+    this.schedule.completed(this.schedule.pollNext(FOUR).orElseThrow(), PublishOutcome.DONE);
+
+    PublishList list = this.schedule.list(id).orElseThrow();
+
+    assertThat(list.total()).as("the number of tasks stays").isEqualTo(2);
+    assertThat(list.done()).as("and how many are done").isEqualTo(2);
+    assertThat(list.name()).as("and what describes the list").isNotBlank();
+  }
+
+  @Test
   void aTaskOfTwoListsCountsInBoth() {
     PublishListId first = this.urgent("a");
     PublishListId second = this.bulk("a");
@@ -1005,6 +1050,8 @@ class PublishScheduleTest {
       }
     }
   }
+
+  private record Retention(int keptLists, Duration lifetime) implements PublishListRetention {}
 
   private record Limits(int parallel, int parallelWhileInteractive) implements PublishingLimits {}
 }

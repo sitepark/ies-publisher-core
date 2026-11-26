@@ -3,6 +3,7 @@ package com.sitepark.ies.publisher.core.publishing.domain.entity;
 import com.sitepark.ies.publisher.core.publishing.domain.value.PublishListId;
 import com.sitepark.ies.publisher.core.publishing.domain.value.PublishListOrigin;
 import com.sitepark.ies.publisher.core.publishing.domain.value.PublishPriority;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Set;
@@ -26,6 +27,7 @@ import org.jspecify.annotations.Nullable;
  * @param failed the tasks that failed for good; must not be {@code null}
  * @param cancelled the tasks dropped before they ran, because the list was cancelled
  * @param created when the list was requested; must not be {@code null}
+ * @param started when the first task of the list started, or {@code null} while none has
  * @param finished when the last task ended, or {@code null} while tasks are waiting or running
  */
 public record PublishList(
@@ -42,12 +44,26 @@ public record PublishList(
     List<PublishTask> failed,
     int cancelled,
     Instant created,
+    @Nullable Instant started,
     @Nullable Instant finished) {
 
   /** Keeps the collections unmodifiable. */
   public PublishList {
     after = Set.copyOf(after);
     failed = List.copyOf(failed);
+  }
+
+  /**
+   * Returns how long the list took, or has taken so far: from the start of its first task to its
+   * end, or to now while it goes on.
+   *
+   * @return the time, or {@code null} if no task has started yet
+   */
+  public @Nullable Duration duration() {
+    if (this.started == null) {
+      return null;
+    }
+    return Duration.between(this.started, this.finished == null ? Instant.now() : this.finished);
   }
 
   /**
