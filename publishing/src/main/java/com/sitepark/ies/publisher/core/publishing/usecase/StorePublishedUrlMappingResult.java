@@ -1,6 +1,7 @@
 package com.sitepark.ies.publisher.core.publishing.usecase;
 
 import com.sitepark.ies.publisher.core.publishing.domain.entity.PublishedUrlMapping;
+import com.sitepark.ies.publisher.core.publishing.domain.value.UrlMappingConflict;
 import java.util.List;
 import java.util.Objects;
 
@@ -14,9 +15,24 @@ import java.util.Objects;
  *
  * @param added mappings that did not exist before and were created; never {@code null}
  * @param removed mappings that no longer exist and were deleted; never {@code null}
+ * @param conflicts mappings that were not stored because another owner holds their path; never
+ *     {@code null}. They are no change: {@link #isEmpty()} ignores them
  */
 public record StorePublishedUrlMappingResult(
-    List<PublishedUrlMapping> added, List<PublishedUrlMapping> removed) {
+    List<PublishedUrlMapping> added,
+    List<PublishedUrlMapping> removed,
+    List<UrlMappingConflict> conflicts) {
+
+  /**
+   * A result without conflicts.
+   *
+   * @param added the mappings that were stored
+   * @param removed the mappings that were deleted
+   */
+  public StorePublishedUrlMappingResult(
+      List<PublishedUrlMapping> added, List<PublishedUrlMapping> removed) {
+    this(added, removed, List.of());
+  }
 
   /**
    * Validates that both lists are non-{@code null} and stores immutable copies of them.
@@ -26,6 +42,8 @@ public record StorePublishedUrlMappingResult(
     Objects.requireNonNull(removed, "removed must not be null");
     added = List.copyOf(added);
     removed = List.copyOf(removed);
+    Objects.requireNonNull(conflicts, "conflicts must not be null");
+    conflicts = List.copyOf(conflicts);
   }
 
   /**

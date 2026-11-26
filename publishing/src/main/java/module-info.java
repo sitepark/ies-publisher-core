@@ -4,6 +4,7 @@ import org.jspecify.annotations.NullMarked;
 @NullMarked
 module com.sitepark.ies.publisher.core.publishing {
   exports com.sitepark.ies.publisher.core.publishing.domain.entity;
+  exports com.sitepark.ies.publisher.core.publishing.domain.exception;
   exports com.sitepark.ies.publisher.core.publishing.domain.value;
   exports com.sitepark.ies.publisher.core.publishing.port;
   exports com.sitepark.ies.publisher.core.publishing.usecase;

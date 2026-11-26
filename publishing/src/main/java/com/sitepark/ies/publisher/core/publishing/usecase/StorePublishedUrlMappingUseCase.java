@@ -2,10 +2,12 @@ package com.sitepark.ies.publisher.core.publishing.usecase;
 
 import com.sitepark.ies.publisher.core.publishing.domain.entity.PublishedUrlMapping;
 import com.sitepark.ies.publisher.core.publishing.domain.value.OwnerUrlMappings;
+import com.sitepark.ies.publisher.core.publishing.domain.value.UrlMappingConflict;
 import com.sitepark.ies.publisher.core.publishing.port.PublishedUrlMappingRepository;
 import jakarta.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Synchronises the persisted URL mappings of a single owner within one channel against a new
@@ -16,6 +18,11 @@ import java.util.List;
  * yet exist are created. There is intentionally no update operation: a logical change to an
  * existing mapping (e.g. a different {@code mode} or {@code priority}) is represented as the
  * deletion of the old entry and the creation of a new one.
+ *
+ * <p>A path leads to one owner in a site and channel. A mapping whose path another owner holds is
+ * not stored and reported as a conflict instead of failing: the owner is still reached by its own
+ * URL, and whoever stores the mappings can follow the holder to try again when it gives the path
+ * up. Of two owners asking for a free path at the same time, exactly one gets it.
  *
  * <p>Two mappings are considered identical – and therefore unchanged – when all content fields
  * ({@code siteId}, {@code channelId}, {@code path}, {@code ownerId}, {@code mode}, {@code
@@ -63,16 +70,33 @@ public class StorePublishedUrlMappingUseCase {
     List<PublishedUrlMapping> removed =
         existing.stream().filter(e -> incoming.stream().noneMatch(e::hasSameContent)).toList();
 
-    List<PublishedUrlMapping> added = new ArrayList<>();
-    for (PublishedUrlMapping mapping : toAdd) {
-      String id = this.repository.create(List.of(mapping));
-      added.add(mapping.toBuilder().id(id).build());
-    }
-
+    // First give up what is no longer wanted: a changed mapping keeps its path, and the path has
+    // to be free before the new entry can take it.
     if (!removed.isEmpty()) {
       this.repository.remove(removed.stream().map(PublishedUrlMapping::id).toList());
     }
 
-    return new StorePublishedUrlMappingResult(added, removed);
+    List<PublishedUrlMapping> added = new ArrayList<>();
+    List<UrlMappingConflict> conflicts = new ArrayList<>();
+    for (PublishedUrlMapping mapping : toAdd) {
+      Optional<String> id = this.repository.createIfFree(mapping);
+      if (id.isPresent()) {
+        added.add(mapping.toBuilder().id(id.get()).build());
+      } else {
+        conflicts.add(this.conflictOf(mapping));
+      }
+    }
+
+    return new StorePublishedUrlMappingResult(added, removed, conflicts);
+  }
+
+  /** The path is taken: by whom, so the owner can follow when the holder gives it up. */
+  private UrlMappingConflict conflictOf(PublishedUrlMapping mapping) {
+    String holder =
+        this.repository
+            .getPublishedUrlMappingByPath(mapping.channelId(), mapping.siteId(), mapping.path())
+            .map(PublishedUrlMapping::ownerId)
+            .orElse(null);
+    return new UrlMappingConflict(mapping, holder);
   }
 }

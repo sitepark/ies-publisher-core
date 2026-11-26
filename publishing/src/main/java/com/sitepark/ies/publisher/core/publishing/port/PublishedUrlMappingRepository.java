@@ -2,6 +2,7 @@ package com.sitepark.ies.publisher.core.publishing.port;
 
 import com.sitepark.ies.publisher.core.publishing.domain.entity.PublishedUrlMapping;
 import java.util.List;
+import java.util.Optional;
 
 /** Persistence port for storing and retrieving {@link PublishedUrlMapping} entries. */
 public interface PublishedUrlMappingRepository {
@@ -56,4 +57,24 @@ public interface PublishedUrlMappingRepository {
    * @return the number of mappings actually removed
    */
   int remove(List<String> ids);
+
+  /**
+   * Stores the mapping, unless its path is taken in its site and channel. Checking and storing are
+   * one step: of two owners asking for a path at the same time, exactly one gets it.
+   *
+   * @param mapping the mapping to store
+   * @return the id the mapping was stored with, or empty if the path is taken
+   */
+  Optional<String> createIfFree(PublishedUrlMapping mapping);
+
+  /**
+   * Returns the mapping stored for a path in a site and channel.
+   *
+   * @param channelId the channel
+   * @param siteId the site
+   * @param path the path
+   * @return the mapping, or empty if the path is free
+   */
+  Optional<PublishedUrlMapping> getPublishedUrlMappingByPath(
+      String channelId, String siteId, String path);
 }

@@ -4,7 +4,6 @@ import com.sitepark.ies.publisher.core.publishing.domain.entity.PublishedObjectF
 import com.sitepark.ies.publisher.core.publishing.port.PublishedObjectFilesCache;
 import com.sitepark.ies.publisher.core.publishing.port.PublishedObjectFilesRepository;
 import jakarta.inject.Inject;
-import java.util.Optional;
 
 /**
  * Returns the files an entity has published in a channel - what a generation of the entity starts
@@ -37,14 +36,9 @@ public class GetPublishedObjectFiles {
    * @return the files in every status, empty if the entity has published none
    */
   public PublishedObjectFiles get(String channelId, String entityId) {
-    Optional<PublishedObjectFiles> kept = this.cache.get(channelId, entityId);
-    if (kept.isPresent()) {
-      return kept.get();
-    }
     // An entity without files is kept too: most links lead to entities a channel holds no file of.
     // Whoever stores files outside this library makes the cache forget them.
-    PublishedObjectFiles files = this.repository.find(channelId, entityId);
-    this.cache.put(files);
-    return files;
+    return this.cache.getOrLoad(
+        channelId, entityId, () -> this.repository.find(channelId, entityId));
   }
 }
