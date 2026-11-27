@@ -15,9 +15,10 @@ import java.util.Optional;
  *
  * <p>The use case compares the incoming set of mappings with the mappings currently stored for the
  * same owner/channel pair. Mappings that are no longer present are deleted; mappings that do not
- * yet exist are created. There is intentionally no update operation: a logical change to an
- * existing mapping (e.g. a different {@code mode} or {@code priority}) is represented as the
- * deletion of the old entry and the creation of a new one.
+ * yet exist are created. A mapping that changes but keeps its path (e.g. a different {@code mode}
+ * or {@code priority}) is updated in place and keeps its id, so the path is never free in between
+ * and no other owner can take it. In the result it still shows as the old mapping removed and the
+ * new one added.
  *
  * <p>A path leads to one owner in a site and channel. A mapping whose path another owner holds is
  * not stored and reported as a conflict instead of failing: the owner is still reached by its own
@@ -78,15 +79,32 @@ public class StorePublishedUrlMappingUseCase {
     List<PublishedUrlMapping> removed =
         existing.stream().filter(e -> incoming.stream().noneMatch(e::hasSameContent)).toList();
 
-    // First give up what is no longer wanted: a changed mapping keeps its path, and the path has
-    // to be free before the new entry can take it.
-    if (!removed.isEmpty()) {
-      this.repository.remove(removed.stream().map(PublishedUrlMapping::id).toList());
+    // A mapping that keeps its path replaces the old entry in place: removing it first would free
+    // the path for a moment, and another owner could take it.
+    List<PublishedUrlMapping> toRemove = new ArrayList<>(removed);
+    List<PublishedUrlMapping> toCreate = new ArrayList<>();
+    List<PublishedUrlMapping> toUpdate = new ArrayList<>();
+    for (PublishedUrlMapping mapping : toAdd) {
+      Optional<PublishedUrlMapping> samePath =
+          toRemove.stream().filter(old -> hasSamePath(old, mapping)).findFirst();
+      if (samePath.isPresent()) {
+        toRemove.remove(samePath.get());
+        toUpdate.add(mapping.toBuilder().id(samePath.get().id()).build());
+      } else {
+        toCreate.add(mapping);
+      }
     }
 
-    List<PublishedUrlMapping> added = new ArrayList<>();
+    if (!toRemove.isEmpty()) {
+      this.repository.remove(toRemove.stream().map(PublishedUrlMapping::id).toList());
+    }
+    if (!toUpdate.isEmpty()) {
+      this.repository.update(toUpdate);
+    }
+
+    List<PublishedUrlMapping> added = new ArrayList<>(toUpdate);
     List<UrlMappingConflict> conflicts = new ArrayList<>();
-    for (PublishedUrlMapping mapping : toAdd) {
+    for (PublishedUrlMapping mapping : toCreate) {
       Optional<String> id = this.repository.createIfFree(mapping);
       if (id.isPresent()) {
         added.add(mapping.toBuilder().id(id.get()).build());
@@ -96,6 +114,10 @@ public class StorePublishedUrlMappingUseCase {
     }
 
     return new StorePublishedUrlMappingResult(added, removed, conflicts);
+  }
+
+  private static boolean hasSamePath(PublishedUrlMapping a, PublishedUrlMapping b) {
+    return a.siteId().equals(b.siteId()) && a.path().equals(b.path());
   }
 
   /** The path is taken: by whom, so the owner can follow when the holder gives it up. */
