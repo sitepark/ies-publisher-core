@@ -455,6 +455,21 @@ class PublishScheduleTest {
   }
 
   @Test
+  void aListComingAfterAListWithACleanupDoesNotWaitForTheCleanup() {
+    PublishListId first = this.open(PublishPriority.URGENT, publish("x"), cleanup("y"));
+    this.after(first, "a", "b");
+    PublishTask x = this.schedule.pollNext(FOUR).orElseThrow();
+    this.schedule.completed(x, PublishOutcome.DONE);
+
+    String one = this.next(FOUR);
+    String two = this.next(FOUR);
+
+    assertThat(List.of(one, two))
+        .as("the cleanup runs last, so the list after it must not wait for it, and runs parallel")
+        .containsExactlyInAnyOrder("a", "b");
+  }
+
+  @Test
   void aThreadInTheForegroundIsPublishing() {
     this.schedule.enterForeground(publish("a"));
 

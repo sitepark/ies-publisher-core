@@ -19,6 +19,7 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.Deque;
 import java.util.HashMap;
@@ -500,7 +501,9 @@ public class PublishSchedule {
       hold.add(list);
       this.holds.put(key, hold);
       Entry covered = this.waiting.get(SlotKey.of(task));
-      if (covered != null && covers(task, covered.task) && !covered.hasToWait()) {
+      if (covered != null
+          && covers(task, covered.task)
+          && !covered.hasToWait(this.cleanupCounts())) {
         this.remove(covered);
         // whoever asked for the task is served by the foreground
         covered.lists.forEach(hold::add);
@@ -834,8 +837,9 @@ public class PublishSchedule {
     if (this.cleaningUp || this.runningBackground >= allowed) {
       return null;
     }
+    CleanupCounts counts = this.cleanupCounts();
     for (Entry entry : this.queue) {
-      if (this.isFree(entry) && !entry.hasToWait()) {
+      if (this.isFree(entry) && !entry.hasToWait(counts)) {
         return entry;
       }
     }
@@ -846,6 +850,11 @@ public class PublishSchedule {
       return this.cleanups.isEmpty() ? null : this.cleanups.first();
     }
     return this.oldestWaitingInACircle();
+  }
+
+  /** The waiting cleanups per list, counted when first asked for: mostly nobody asks. */
+  private CleanupCounts cleanupCounts() {
+    return new CleanupCounts(this.cleanups);
   }
 
   private boolean isFree(Entry entry) {
@@ -929,12 +938,16 @@ public class PublishSchedule {
       return most;
     }
 
-    /** Whether a list this task comes after still has other tasks waiting or running. */
-    private boolean hasToWait() {
+    /**
+     * Whether a list this task comes after still has other tasks waiting or running. Cleanups of
+     * the list do not count: they run last, once nothing else is waiting, so waiting for them
+     * would make this task wait for itself.
+     */
+    private boolean hasToWait(CleanupCounts cleanups) {
       this.after.removeIf(list -> list.finished != null);
       for (ListState predecessor : this.after) {
         int own = this.lists.contains(predecessor) ? 1 : 0;
-        if (predecessor.open - own > 0) {
+        if (predecessor.open - own > 0 && predecessor.open - own > cleanups.of(predecessor)) {
           return true;
         }
       }
@@ -943,6 +956,32 @@ public class PublishSchedule {
 
     private boolean waitsForForeground() {
       return this.after.stream().anyMatch(list -> list.foreground && list.finished == null);
+    }
+  }
+
+  /** How many waiting cleanups each list has, worked out once and only if needed. */
+  private static final class CleanupCounts {
+
+    private final Collection<Entry> cleanups;
+
+    private @Nullable Map<ListState, Integer> counts;
+
+    private CleanupCounts(Collection<Entry> cleanups) {
+      this.cleanups = cleanups;
+    }
+
+    private int of(ListState list) {
+      Map<ListState, Integer> known = this.counts;
+      if (known == null) {
+        known = new HashMap<>();
+        for (Entry cleanup : this.cleanups) {
+          for (ListState owner : cleanup.lists) {
+            known.merge(owner, 1, Integer::sum);
+          }
+        }
+        this.counts = known;
+      }
+      return known.getOrDefault(list, 0);
     }
   }
 
