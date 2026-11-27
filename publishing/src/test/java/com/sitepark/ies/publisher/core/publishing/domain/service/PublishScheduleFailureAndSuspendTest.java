@@ -124,6 +124,27 @@ class PublishScheduleFailureAndSuspendTest extends PublishScheduleTestSupport {
   }
 
   @Test
+  void resumeByAnotherThreadIsRejectedAndKeepsTheSuspension() {
+    this.schedule.suspend();
+
+    CompletableFuture<Void> foreign = CompletableFuture.runAsync(this.schedule::resume);
+
+    assertThat(foreign)
+        .as("another thread must not lift the suspension")
+        .failsWithin(Duration.ofSeconds(5))
+        .withThrowableThat()
+        .withCauseInstanceOf(IllegalStateException.class);
+    assertThat(this.schedule.status().suspended()).as("still suspended").isTrue();
+  }
+
+  @Test
+  void resumeWithoutSuspensionDoesNothing() {
+    this.schedule.resume();
+
+    assertThat(this.schedule.status().suspended()).isFalse();
+  }
+
+  @Test
   void suspendingWaitsForWhatIsBeingPublished() {
     this.urgent("a");
     PublishTask running = this.schedule.pollNext(FOUR).orElseThrow();
