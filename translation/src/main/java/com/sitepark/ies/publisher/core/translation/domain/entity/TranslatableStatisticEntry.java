@@ -54,9 +54,10 @@ public record TranslatableStatisticEntry(
   }
 
   /** Builder for {@link TranslatableStatisticEntry}. */
+  @SuppressWarnings("NullAway.Init") // required fields are set after construction
   public static final class Builder {
-    private @Nullable LocalDate period;
-    private @Nullable String publisherId;
+    private LocalDate period;
+    private String publisherId;
     private @Nullable String publisherName;
     private long bytes;
 
@@ -111,7 +112,6 @@ public record TranslatableStatisticEntry(
      *
      * @return the entry
      */
-    @SuppressWarnings("NullAway")
     public TranslatableStatisticEntry build() {
       return new TranslatableStatisticEntry(period, publisherId, publisherName, bytes);
     }
