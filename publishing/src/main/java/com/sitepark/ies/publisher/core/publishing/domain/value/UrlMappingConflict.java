@@ -1,6 +1,7 @@
 package com.sitepark.ies.publisher.core.publishing.domain.value;
 
 import com.sitepark.ies.publisher.core.publishing.domain.entity.PublishedUrlMapping;
+import java.util.Objects;
 import org.jspecify.annotations.Nullable;
 
 /**
@@ -18,11 +19,9 @@ public record UrlMappingConflict(PublishedUrlMapping mapping, @Nullable String h
   /**
    * Validates that the mapping is present.
    *
-   * @throws IllegalArgumentException if {@code mapping} is {@code null}
+   * @throws NullPointerException if {@code mapping} is {@code null}
    */
   public UrlMappingConflict {
-    if (mapping == null) {
-      throw new IllegalArgumentException("Mapping must not be null");
-    }
+    Objects.requireNonNull(mapping, "Mapping must not be null");
   }
 }

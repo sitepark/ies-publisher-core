@@ -55,8 +55,8 @@ class OwnerUrlMappingsTest {
                     .channelId("channel-1")
                     .mappings(List.of())
                     .build())
-        .as("null ownerId should throw an IllegalArgumentException")
-        .isInstanceOf(IllegalArgumentException.class);
+        .as("null ownerId should throw a NullPointerException")
+        .isInstanceOf(NullPointerException.class);
   }
 
   @Test
@@ -81,8 +81,8 @@ class OwnerUrlMappingsTest {
                     .channelId(null)
                     .mappings(List.of())
                     .build())
-        .as("null channelId should throw an IllegalArgumentException")
-        .isInstanceOf(IllegalArgumentException.class);
+        .as("null channelId should throw a NullPointerException")
+        .isInstanceOf(NullPointerException.class);
   }
 
   @Test

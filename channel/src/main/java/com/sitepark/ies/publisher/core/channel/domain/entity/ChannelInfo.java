@@ -2,6 +2,7 @@ package com.sitepark.ies.publisher.core.channel.domain.entity;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
+import java.util.Objects;
 import org.jspecify.annotations.Nullable;
 
 /**
@@ -18,13 +19,16 @@ public record ChannelInfo(String id, String name, @Nullable String description) 
   /**
    * Validates that the channel's identifier and name are present and not blank.
    *
-   * @throws IllegalArgumentException if {@code id} or {@code name} is {@code null} or blank
+   * @throws NullPointerException if {@code id} or {@code name} is {@code null}
+   * @throws IllegalArgumentException if {@code id} or {@code name} is blank
    */
   public ChannelInfo {
-    if (id == null || id.isBlank()) {
+    Objects.requireNonNull(id, "Channel ID must not be null or blank");
+    if (id.isBlank()) {
       throw new IllegalArgumentException("Channel ID must not be null or blank");
     }
-    if (name == null || name.isBlank()) {
+    Objects.requireNonNull(name, "Channel name must not be null or blank");
+    if (name.isBlank()) {
       throw new IllegalArgumentException("Channel name must not be null or blank");
     }
   }

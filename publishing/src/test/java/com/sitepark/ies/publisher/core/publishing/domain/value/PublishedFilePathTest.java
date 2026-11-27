@@ -9,7 +9,7 @@ class PublishedFilePathTest {
   @Test
   void rejectsAMissingType() {
     assertThatThrownBy(() -> new PublishedFilePath(null, "/www/index.php"))
-        .isInstanceOf(IllegalArgumentException.class);
+        .isInstanceOf(NullPointerException.class);
   }
 
   @Test
@@ -21,6 +21,6 @@ class PublishedFilePathTest {
   @Test
   void rejectsAMissingFile() {
     assertThatThrownBy(() -> new PublishedFilePath(PublishedFileType.OBJECT, null))
-        .isInstanceOf(IllegalArgumentException.class);
+        .isInstanceOf(NullPointerException.class);
   }
 }

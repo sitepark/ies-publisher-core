@@ -2,6 +2,7 @@ package com.sitepark.ies.publisher.core.publishing.domain.value;
 
 import com.sitepark.ies.publisher.core.publishing.domain.entity.PublishTask;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import org.jspecify.annotations.Nullable;
 
@@ -29,25 +30,19 @@ public record PublishListRequest(
   /**
    * Validates the request and keeps its collections unmodifiable.
    *
-   * @throws IllegalArgumentException if {@code name} is {@code null} or blank, or {@code origin},
-   *     {@code priority}, {@code after} or {@code tasks} is {@code null}
+   * @throws NullPointerException if {@code name}, {@code origin}, {@code priority}, {@code after} or
+   *     {@code tasks} is {@code null}
+   * @throws IllegalArgumentException if {@code name} is blank
    */
   public PublishListRequest {
-    if (name == null || name.isBlank()) {
+    Objects.requireNonNull(name, "Name must not be null or blank");
+    if (name.isBlank()) {
       throw new IllegalArgumentException("Name must not be null or blank");
     }
-    if (origin == null) {
-      throw new IllegalArgumentException("Origin must not be null");
-    }
-    if (priority == null) {
-      throw new IllegalArgumentException("Priority must not be null");
-    }
-    if (after == null) {
-      throw new IllegalArgumentException("Predecessors must not be null");
-    }
-    if (tasks == null) {
-      throw new IllegalArgumentException("Tasks must not be null");
-    }
+    Objects.requireNonNull(origin, "Origin must not be null");
+    Objects.requireNonNull(priority, "Priority must not be null");
+    Objects.requireNonNull(after, "Predecessors must not be null");
+    Objects.requireNonNull(tasks, "Tasks must not be null");
     after = Set.copyOf(after);
     tasks = List.copyOf(tasks);
   }
