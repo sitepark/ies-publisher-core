@@ -60,6 +60,8 @@ Each module follows the same internal layer structure:
 
 `PublishSchedule` is a deliberately stateful domain service: it holds the lists and tasks in memory, and all publishing use cases share the one `@Singleton` instance through their constructor. It reads no ports — use cases read them and pass plain values (`PublishingCapacity`, `PublishListRetentionSetting` via `retain()`). Adapters call `InitPublishSchedule.init()` once at startup so the stored settings apply.
 
+Package-private classes in `domain/service/` are implementation details of a service — neither domain services nor API, and invisible outside the module even though the package is exported. `PublishSchedule` keeps the lock and the rules; its state lives in package-private classes used only under that lock and not thread-safe themselves: `WaitingTasks` (waiting tasks, merge, order, withdraw, retry), `EntityHolds` (entities being published, foreground waiting, suspension, how much runs in background and foreground), `PublishLists` (lists going on and over, retention); `ListState` keeps its counts behind methods, plus the data classes they hold (`WaitingTask`, `Hold`, `ListState`, `CleanupCounts`, `SlotKey`). They stay in the same package so their fields can remain package-private instead of public.
+
 ## Architecture Rules
 
 **Dependency direction is strictly enforced:**

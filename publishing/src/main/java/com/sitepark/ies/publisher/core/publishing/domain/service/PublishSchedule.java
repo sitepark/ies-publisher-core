@@ -6,7 +6,6 @@ import com.sitepark.ies.publisher.core.publishing.domain.value.PublishListId;
 import com.sitepark.ies.publisher.core.publishing.domain.value.PublishListRequest;
 import com.sitepark.ies.publisher.core.publishing.domain.value.PublishListRetentionSetting;
 import com.sitepark.ies.publisher.core.publishing.domain.value.PublishOutcome;
-import com.sitepark.ies.publisher.core.publishing.domain.value.PublishPriority;
 import com.sitepark.ies.publisher.core.publishing.domain.value.PublishQueueStatus;
 import com.sitepark.ies.publisher.core.publishing.domain.value.PublishTaskKey;
 import com.sitepark.ies.publisher.core.publishing.domain.value.PublishTaskType;
@@ -14,25 +13,9 @@ import com.sitepark.ies.publisher.core.publishing.domain.value.PublishingCapacit
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import java.time.Clock;
-import java.time.Duration;
 import java.time.Instant;
-import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.Deque;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.NavigableSet;
-import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
-import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
@@ -80,16 +63,8 @@ import org.jspecify.annotations.Nullable;
  * for each other's entity would wait forever; nothing in the publisher does.
  */
 @Singleton
-// The maps are guarded by the lock; entries, holds and lists are private state of this class.
-@SuppressWarnings({
-  "PMD.GodClass",
-  "PMD.TooManyMethods",
-  "PMD.CyclomaticComplexity",
-  "PMD.CouplingBetweenObjects",
-  "PMD.UseConcurrentHashMap",
-  "PMD.LawOfDemeter",
-  "PMD.ExcessiveImports"
-})
+// The rules work on the waiting tasks, holds and lists, which are state of this package only.
+@SuppressWarnings({"PMD.TooManyMethods", "PMD.CouplingBetweenObjects", "PMD.LawOfDemeter"})
 public class PublishSchedule {
 
   /** How often a task is tried again after an attempt that failed for a passing reason. */
@@ -98,64 +73,21 @@ public class PublishSchedule {
   /** How long a dispatcher waits at most before it asks for the capacity again, in milliseconds. */
   private static final long RECHECK_MILLIS = 1000;
 
-  /** The depth of a publication that is not nested in another one of the same entity. */
-  private static final int OUTERMOST = 1;
-
-  private static final DateTimeFormatter ID_TIME =
-      DateTimeFormatter.ofPattern("yyyyMMdd-HHmmssSSS").withZone(ZoneOffset.UTC);
-
-  private static final Comparator<Entry> BY_SEQUENCE = Comparator.comparingLong(e -> e.sequence);
-
-  private static final Comparator<Entry> BY_PRIORITY =
-      Comparator.<Entry, PublishPriority>comparing(e -> e.priority).thenComparing(BY_SEQUENCE);
-
   private final ReentrantLock lock = new ReentrantLock();
 
   private final Condition changed = this.lock.newCondition();
 
-  /** The waiting tasks by entity and place. */
-  private final Map<SlotKey, Entry> waiting = new HashMap<>();
+  /** The tasks waiting to be published. */
+  private final WaitingTasks waiting = new WaitingTasks();
 
-  /** The waiting tasks except cleanups, in the order they are handed out. */
-  private final NavigableSet<Entry> queue = new TreeSet<>(BY_PRIORITY);
+  /** Who publishes what, who waits for it in the foreground, and who suspended publishing. */
+  private final EntityHolds holds = new EntityHolds();
 
-  /** The waiting cleanups, oldest first. */
-  private final NavigableSet<Entry> cleanups = new TreeSet<>(BY_SEQUENCE);
+  /** The lists going on and the ones over. */
+  private final PublishLists publishLists;
 
-  /** The entities being published. */
-  private final Map<PublishTaskKey, Hold> holds = new HashMap<>();
-
-  /** The foreground publications waiting for an entity, by entity. */
-  private final Map<PublishTaskKey, Integer> foregroundWaiting = new HashMap<>();
-
-  /** The threads that suspended publishing and have not resumed it. */
-  private final List<Thread> suspenders = new ArrayList<>();
-
-  /** The lists with tasks waiting or running, in the order they were requested. */
-  private final Map<PublishListId, ListState> openLists = new LinkedHashMap<>();
-
-  /** The lists that are over, youngest first. */
-  private final Deque<ListState> finishedLists = new ArrayDeque<>();
-
-  /** How many of the lists that are over are kept, and for how long. */
-  private PublishListRetentionSetting retention = PublishListRetentionSetting.DEFAULT;
-
-  /** Tells the time lists are requested, started and over, and when they expire. */
+  /** Tells the time the tasks of a list start. */
   private final Clock clock;
-
-  /** Makes the ids of lists unique across restarts: the time this schedule was created. */
-  private final String idPrefix;
-
-  private long listCounter;
-
-  private long sequence;
-
-  private int runningBackground;
-
-  /** Whether a cleanup runs; nothing else is started in the background meanwhile. */
-  private boolean cleaningUp;
-
-  private int foregroundActive;
 
   private long processed;
 
@@ -180,7 +112,7 @@ public class PublishSchedule {
    */
   PublishSchedule(Clock clock) {
     this.clock = clock;
-    this.idPrefix = ID_TIME.format(clock.instant());
+    this.publishLists = new PublishLists(clock);
   }
 
   // --- lists
@@ -194,8 +126,7 @@ public class PublishSchedule {
   public void retain(PublishListRetentionSetting retention) {
     this.lock.lock();
     try {
-      this.retention = retention;
-      this.dropExpiredLists();
+      this.publishLists.retain(retention);
     } finally {
       this.lock.unlock();
     }
@@ -210,17 +141,12 @@ public class PublishSchedule {
   public PublishListId open(PublishListRequest request) {
     this.lock.lock();
     try {
-      ListState list = this.register(request, false);
-      for (PublishTask task : request.tasks()) {
-        Entry entry = this.entryFor(task);
-        this.attach(entry, list);
-        this.index(entry);
-      }
-      if (list.open == 0) {
-        this.finish(list);
-      } else {
+      ListState list = this.publishLists.register(request, false);
+      request.tasks().forEach(task -> this.waiting.add(task, list));
+      if (!list.isOver()) {
         this.drainedAnnounced = false;
       }
+      this.publishLists.finishIfOver(list);
       this.changed.signalAll();
       return list.id;
     } finally {
@@ -239,12 +165,9 @@ public class PublishSchedule {
   public PublishListId openForeground(PublishListRequest request) {
     this.lock.lock();
     try {
-      ListState list = this.register(request, true);
-      list.total = request.tasks().size();
-      list.open = list.total;
-      if (list.open == 0) {
-        this.finish(list);
-      }
+      ListState list = this.publishLists.register(request, true);
+      list.expectRequestedTasks();
+      this.publishLists.finishIfOver(list);
       return list.id;
     } finally {
       this.lock.unlock();
@@ -259,16 +182,12 @@ public class PublishSchedule {
   public void closeForeground(PublishListId id) {
     this.lock.lock();
     try {
-      ListState list = this.openLists.get(id);
+      ListState list = this.publishLists.going(id);
       if (list == null || !list.foreground) {
         return;
       }
-      int neverStarted = list.open - list.running;
-      list.open -= neverStarted;
-      list.cancelled += neverStarted;
-      if (list.open == 0) {
-        this.finish(list);
-      }
+      list.cancelNeverStarted();
+      this.publishLists.finishIfOver(list);
       this.changed.signalAll();
     } finally {
       this.lock.unlock();
@@ -287,11 +206,11 @@ public class PublishSchedule {
   public PublishList await(PublishListId id) throws InterruptedException {
     this.lock.lockInterruptibly();
     try {
-      ListState list = this.find(id);
+      ListState list = this.publishLists.find(id);
       if (list == null) {
         throw new IllegalArgumentException("unknown list: " + id);
       }
-      while (list.finished == null) {
+      while (!list.isFinished()) {
         this.changed.await();
       }
       return list.snapshot();
@@ -309,7 +228,7 @@ public class PublishSchedule {
   public Optional<PublishList> list(PublishListId id) {
     this.lock.lock();
     try {
-      return Optional.ofNullable(this.find(id)).map(ListState::snapshot);
+      return Optional.ofNullable(this.publishLists.find(id)).map(ListState::snapshot);
     } finally {
       this.lock.unlock();
     }
@@ -324,11 +243,7 @@ public class PublishSchedule {
   public List<PublishList> lists() {
     this.lock.lock();
     try {
-      this.dropExpiredLists();
-      List<PublishList> all = new ArrayList<>(this.openLists.size() + this.finishedLists.size());
-      this.openLists.values().forEach(list -> all.add(list.snapshot()));
-      this.finishedLists.forEach(list -> all.add(list.snapshot()));
-      return all;
+      return this.publishLists.snapshots();
     } finally {
       this.lock.unlock();
     }
@@ -344,7 +259,7 @@ public class PublishSchedule {
   public boolean cancel(PublishListId id) {
     this.lock.lock();
     try {
-      ListState list = this.openLists.get(id);
+      ListState list = this.publishLists.going(id);
       if (list == null) {
         return false;
       }
@@ -364,7 +279,7 @@ public class PublishSchedule {
   public int cancelAll() {
     this.lock.lock();
     try {
-      List<ListState> active = new ArrayList<>(this.openLists.values());
+      List<ListState> active = this.publishLists.going();
       active.forEach(this::cancel);
       this.changed.signalAll();
       return active.size();
@@ -389,13 +304,15 @@ public class PublishSchedule {
     this.lock.lockInterruptibly();
     try {
       while (true) {
-        if (this.suspenders.isEmpty()) {
-          Entry next = this.findRunnable(capacity.get());
+        if (!this.holds.isSuspended()) {
+          WaitingTask next = this.findRunnable(capacity.get());
           if (next != null) {
             this.start(next);
             return Optional.of(next.task);
           }
-          if (!this.drainedAnnounced && this.waiting.isEmpty() && this.runningBackground == 0) {
+          if (!this.drainedAnnounced
+              && this.waiting.isEmpty()
+              && this.holds.runningInBackground() == 0) {
             this.drainedAnnounced = true;
             return Optional.empty();
           }
@@ -418,10 +335,10 @@ public class PublishSchedule {
   public Optional<PublishTask> pollNext(PublishingCapacity capacity) {
     this.lock.lock();
     try {
-      if (!this.suspenders.isEmpty()) {
+      if (this.holds.isSuspended()) {
         return Optional.empty();
       }
-      Entry next = this.findRunnable(capacity);
+      WaitingTask next = this.findRunnable(capacity);
       if (next == null) {
         return Optional.empty();
       }
@@ -464,15 +381,14 @@ public class PublishSchedule {
       if (hold == null || hold.foreground) {
         return;
       }
-      this.holds.remove(task.key());
-      this.runningBackground--;
-      if (task.type() == PublishTaskType.CLEANUP) {
-        this.cleaningUp = false;
-      }
+      this.holds.release(hold);
       this.processed++;
-      hold.lists.forEach(list -> list.running--);
+      hold.stopped();
       if (outcome == PublishOutcome.RETRY && task.attempt() < MAX_RETRIES) {
-        this.tryAgain(hold, task);
+        // the lists that asked for the task wait for what follows it
+        if (this.waiting.requeue(task, hold.lists)) {
+          this.drainedAnnounced = false;
+        }
       } else {
         if (outcome != PublishOutcome.DONE) {
           this.failed++;
@@ -512,27 +428,23 @@ public class PublishSchedule {
     Thread thread = Thread.currentThread();
     this.lock.lock();
     try {
-      ListState list = listId == null ? null : this.openLists.get(listId);
+      ListState list = listId == null ? null : this.publishLists.going(listId);
       Hold own = this.holds.get(key);
       if (own != null && thread.equals(own.owner)) {
         own.depth++;
         own.add(list, this.clock.instant());
         return;
       }
-      this.foregroundActive++;
-      this.foregroundWaiting.merge(key, 1, Integer::sum);
-      while (this.holds.containsKey(key) || this.isSuspendedFor(thread)) {
+      this.holds.startWaitingInForeground(key);
+      while (this.holds.isHeld(key) || this.holds.isSuspendedFor(thread)) {
         this.changed.awaitUninterruptibly();
       }
-      this.stopWaitingInForeground(key);
+      this.holds.stopWaitingInForeground(key);
       Hold hold = Hold.ofForeground(thread, task);
       hold.add(list, this.clock.instant());
-      this.holds.put(key, hold);
-      Entry covered = this.waiting.get(SlotKey.of(task));
-      if (covered != null
-          && covers(task, covered.task)
-          && !covered.hasToWait(this.cleanupCounts())) {
-        this.remove(covered);
+      this.holds.put(hold);
+      WaitingTask covered = this.waiting.takeOverBy(task);
+      if (covered != null) {
         // whoever asked for the task is served by the foreground
         Instant now = this.clock.instant();
         covered.lists.forEach(coveredList -> hold.add(coveredList, now));
@@ -555,16 +467,15 @@ public class PublishSchedule {
       if (hold == null || !Thread.currentThread().equals(hold.owner)) {
         return;
       }
-      if (hold.depth > OUTERMOST) {
+      if (hold.depth > Hold.OUTERMOST) {
         hold.depth--;
         return;
       }
       if (!hold.foreground) {
         return;
       }
-      this.holds.remove(key);
-      this.foregroundActive--;
-      hold.lists.forEach(list -> list.running--);
+      this.holds.release(hold);
+      hold.stopped();
       this.settle(hold, succeeded);
       this.changed.signalAll();
     } finally {
@@ -583,8 +494,8 @@ public class PublishSchedule {
     Thread thread = Thread.currentThread();
     this.lock.lock();
     try {
-      this.suspenders.add(thread);
-      while (this.isPublishedByOthers(thread)) {
+      this.holds.suspend(thread);
+      while (this.holds.isPublishedByOthers(thread)) {
         this.changed.awaitUninterruptibly();
       }
     } finally {
@@ -600,9 +511,7 @@ public class PublishSchedule {
   public void resume() {
     this.lock.lock();
     try {
-      if (!this.suspenders.remove(Thread.currentThread()) && !this.suspenders.isEmpty()) {
-        this.suspenders.remove(0);
-      }
+      this.holds.resume(Thread.currentThread());
       this.changed.signalAll();
     } finally {
       this.lock.unlock();
@@ -619,8 +528,7 @@ public class PublishSchedule {
   public boolean isWaiting(PublishTaskKey key, PublishTaskType type) {
     this.lock.lock();
     try {
-      Entry entry = this.waiting.get(new SlotKey(key, type.slot()));
-      return entry != null && entry.task.type() == type;
+      return this.waiting.isWaiting(key, type);
     } finally {
       this.lock.unlock();
     }
@@ -637,7 +545,7 @@ public class PublishSchedule {
     Thread thread = Thread.currentThread();
     this.lock.lock();
     try {
-      return this.holds.values().stream().anyMatch(hold -> thread.equals(hold.owner));
+      return this.holds.isPublishing(thread);
     } finally {
       this.lock.unlock();
     }
@@ -653,240 +561,49 @@ public class PublishSchedule {
     try {
       return new PublishQueueStatus(
           this.waiting.size(),
-          this.runningBackground,
-          this.foregroundActive,
+          this.holds.runningInBackground(),
+          this.holds.activeInForeground(),
           this.processed,
           this.failed,
-          !this.suspenders.isEmpty());
+          this.holds.isSuspended());
     } finally {
       this.lock.unlock();
     }
   }
 
-  // --- lists, internally
-
-  private ListState register(PublishListRequest request, boolean foreground) {
-    this.listCounter++;
-    PublishListId id =
-        new PublishListId(this.idPrefix + "-" + String.format("%012d", this.listCounter));
-    ListState list = new ListState(id, request, foreground, this.clock.instant());
-    for (PublishListId predecessor : request.after()) {
-      ListState known = this.openLists.get(predecessor);
-      // a list that is over, or was never known, is nothing to wait for
-      if (known != null) {
-        list.after.add(known);
-      }
-    }
-    this.openLists.put(id, list);
-    return list;
-  }
-
-  private @Nullable ListState find(PublishListId id) {
-    this.dropExpiredLists();
-    ListState active = this.openLists.get(id);
-    if (active != null) {
-      return active;
-    }
-    for (ListState finished : this.finishedLists) {
-      if (finished.id.equals(id)) {
-        return finished;
-      }
-    }
-    return null;
-  }
-
-  private void finish(ListState list) {
-    list.finished = this.clock.instant();
-    list.releaseTasks();
-    this.openLists.remove(list.id);
-    this.finishedLists.addFirst(list);
-    this.dropExpiredLists();
-  }
-
-  /** Forgets the lists over the number or the age to be kept; the oldest are last. */
-  private void dropExpiredLists() {
-    int kept = this.retention.keptLists();
-    Duration lifetime = this.retention.lifetime();
-    Instant oldest = this.clock.instant().minus(lifetime);
-    while (!this.finishedLists.isEmpty()) {
-      ListState last = this.finishedLists.getLast();
-      Instant finished = last.finished;
-      boolean tooOld = finished != null && !finished.isAfter(oldest);
-      if (this.finishedLists.size() > kept || tooOld) {
-        this.finishedLists.removeLast();
-      } else {
-        break;
-      }
-    }
-  }
+  // --- internally
 
   /** Drops the waiting tasks of the list, unless another list wants them too. */
   private void cancel(ListState list) {
-    for (Entry entry : new ArrayList<>(this.waiting.values())) {
-      if (entry.lists.contains(list)) {
-        this.withdraw(entry, list);
-      }
-    }
-    if (list.open == 0) {
-      this.finish(list);
-    }
-  }
-
-  private void withdraw(Entry entry, ListState list) {
-    this.unindex(entry);
-    entry.lists.remove(list);
-    list.open--;
-    list.cancelled++;
-    if (entry.lists.isEmpty()) {
-      this.waiting.remove(SlotKey.of(entry.task));
-    } else {
-      entry.priority = entry.mostUrgent();
-      this.index(entry);
-    }
+    this.waiting.withdraw(list);
+    this.publishLists.finishIfOver(list);
   }
 
   /** The work is over for good: tells every list that asked for it. */
   private void settle(Hold hold, boolean succeeded) {
     for (ListState list : hold.lists) {
-      list.open--;
-      if (succeeded) {
-        list.done++;
-      } else {
-        list.failed.add(hold.task);
-      }
-      if (list.open == 0) {
-        this.finish(list);
-      }
+      list.taskEnded(hold.task, succeeded);
+      this.publishLists.finishIfOver(list);
     }
   }
 
-  /**
-   * Requests a task again after an attempt that failed for a passing reason, unless a newer request
-   * for its entity is waiting already. The lists that asked for the task wait for what follows it.
-   */
-  private void tryAgain(Hold hold, PublishTask task) {
-    Entry next = this.waiting.get(SlotKey.of(task));
-    if (next == null) {
-      next = this.entryFor(task.nextAttempt());
-      this.drainedAnnounced = false;
-    } else {
-      this.unindex(next);
-    }
-    for (ListState list : hold.lists) {
-      if (next.lists.contains(list)) {
-        // the list asked twice and is served once
-        list.open--;
-        list.total--;
-      } else {
-        next.lists.add(list);
-        next.after.addAll(list.after);
-      }
-    }
-    next.priority = next.mostUrgent();
-    this.index(next);
-  }
-
-  // --- tasks, internally
-
-  /** The waiting task for the entity and place, merged with the request, not indexed. */
-  private Entry entryFor(PublishTask task) {
-    SlotKey slot = SlotKey.of(task);
-    Entry entry = this.waiting.get(slot);
-    if (entry == null) {
-      this.sequence++;
-      entry = new Entry(task, this.sequence);
-      this.waiting.put(slot, entry);
-    } else {
-      this.unindex(entry);
-      entry.task = merge(entry.task, task);
-    }
-    return entry;
-  }
-
-  /** Makes the list wait for the task, once: tasks merged into one count as one. */
-  private void attach(Entry entry, ListState list) {
-    if (entry.lists.add(list)) {
-      list.open++;
-      list.total++;
-      entry.after.addAll(list.after);
-    }
-    entry.priority = entry.mostUrgent();
-  }
-
-  /**
-   * Whether the foreground doing a task serves a waiting task as well: it does the same work, with
-   * everything the waiting task asked for. Otherwise the waiting task stays and runs afterwards -
-   * an extra run is harmless, a lost option or a revoked entity published again is not.
-   */
-  private static boolean covers(PublishTask foreground, PublishTask waiting) {
-    return foreground.type() != PublishTaskType.CLEANUP
-        && foreground.type() == waiting.type()
-        && foreground.options().merge(waiting.options()).equals(foreground.options())
-        && (waiting.attachment() == null
-            || Objects.equals(waiting.attachment(), foreground.attachment()));
-  }
-
-  /** One task for two requests: the younger says what to do, neither loses what it asked for. */
-  private static PublishTask merge(PublishTask older, PublishTask younger) {
-    Object attachment = younger.attachment() != null ? younger.attachment() : older.attachment();
-    return new PublishTask(
-        younger.key(),
-        younger.type(),
-        older.options().merge(younger.options()),
-        Math.min(older.attempt(), younger.attempt()),
-        attachment);
-  }
-
-  private void index(Entry entry) {
-    if (entry.task.type() == PublishTaskType.CLEANUP) {
-      this.cleanups.add(entry);
-    } else {
-      this.queue.add(entry);
-    }
-  }
-
-  private void unindex(Entry entry) {
-    if (entry.task.type() == PublishTaskType.CLEANUP) {
-      this.cleanups.remove(entry);
-    } else {
-      this.queue.remove(entry);
-    }
-  }
-
-  private void remove(Entry entry) {
-    this.unindex(entry);
-    this.waiting.remove(SlotKey.of(entry.task));
-  }
-
-  private @Nullable Entry findRunnable(PublishingCapacity capacity) {
-    int allowed =
-        this.foregroundActive > 0 ? capacity.parallelWhileInteractive() : capacity.parallel();
-    if (this.cleaningUp || this.runningBackground >= allowed) {
+  private @Nullable WaitingTask findRunnable(PublishingCapacity capacity) {
+    if (!this.holds.mayStartBackground(capacity)) {
       return null;
     }
-    CleanupCounts counts = this.cleanupCounts();
-    for (Entry entry : this.queue) {
-      if (this.isFree(entry) && !entry.hasToWait(counts)) {
-        return entry;
+    CleanupCounts counts = this.waiting.cleanupCounts();
+    for (WaitingTask waitingTask : this.waiting.inOrder()) {
+      if (this.holds.isFree(waitingTask.task.key()) && !waitingTask.hasToWait(counts)) {
+        return waitingTask;
       }
     }
     if (!this.holds.isEmpty()) {
       return null;
     }
-    if (this.queue.isEmpty()) {
-      return this.cleanups.isEmpty() ? null : this.cleanups.first();
+    if (this.waiting.onlyCleanups()) {
+      return this.waiting.oldestCleanup();
     }
     return this.oldestWaitingInACircle();
-  }
-
-  /** The waiting cleanups per list, counted when first asked for: mostly nobody asks. */
-  private CleanupCounts cleanupCounts() {
-    return new CleanupCounts(this.cleanups);
-  }
-
-  private boolean isFree(Entry entry) {
-    PublishTaskKey key = entry.task.key();
-    return !this.holds.containsKey(key) && !this.foregroundWaiting.containsKey(key);
   }
 
   /**
@@ -894,248 +611,20 @@ public class PublishSchedule {
    * wait for them, which merging can cause. The first of them runs, so the rest can follow. A task
    * waiting for a foreground list is not in a circle: that list is published by its own thread.
    */
-  private @Nullable Entry oldestWaitingInACircle() {
-    for (Entry entry : this.queue) {
-      if (this.isFree(entry) && !entry.waitsForForeground()) {
-        return entry;
+  private @Nullable WaitingTask oldestWaitingInACircle() {
+    for (WaitingTask waitingTask : this.waiting.inOrder()) {
+      if (this.holds.isFree(waitingTask.task.key()) && !waitingTask.waitsForForeground()) {
+        return waitingTask;
       }
     }
     return null;
   }
 
-  private void start(Entry entry) {
-    this.remove(entry);
-    Hold hold = Hold.ofBackground(entry);
+  private void start(WaitingTask waitingTask) {
+    this.waiting.remove(waitingTask);
+    Hold hold = Hold.ofBackground(waitingTask);
     Instant now = this.clock.instant();
-    entry.lists.forEach(list -> hold.add(list, now));
-    this.holds.put(entry.task.key(), hold);
-    this.runningBackground++;
-    if (entry.task.type() == PublishTaskType.CLEANUP) {
-      this.cleaningUp = true;
-    }
-  }
-
-  private void stopWaitingInForeground(PublishTaskKey key) {
-    int remaining = this.foregroundWaiting.getOrDefault(key, 0) - 1;
-    if (remaining > 0) {
-      this.foregroundWaiting.put(key, remaining);
-    } else {
-      this.foregroundWaiting.remove(key);
-    }
-  }
-
-  /** Publishing is suspended for a thread unless it suspended it or is in the middle of a task. */
-  private boolean isSuspendedFor(Thread thread) {
-    if (this.suspenders.isEmpty() || this.suspenders.contains(thread)) {
-      return false;
-    }
-    return this.holds.values().stream().noneMatch(hold -> thread.equals(hold.owner));
-  }
-
-  private boolean isPublishedByOthers(Thread thread) {
-    return this.holds.values().stream().anyMatch(hold -> !thread.equals(hold.owner));
-  }
-
-  /** A waiting task: mutable, since requests are merged into it. */
-  private static final class Entry {
-
-    private PublishTask task;
-
-    /** When the task was first requested; its place among tasks of the same priority. */
-    private final long sequence;
-
-    /** As urgent as the most urgent list that asked for the task. */
-    private PublishPriority priority = PublishPriority.BULK;
-
-    /** The lists that asked for the task. */
-    private final Set<ListState> lists = new HashSet<>();
-
-    /** The lists whose other tasks have to be done before this one starts. */
-    private final Set<ListState> after = new HashSet<>();
-
-    private Entry(PublishTask task, long sequence) {
-      this.task = task;
-      this.sequence = sequence;
-    }
-
-    private PublishPriority mostUrgent() {
-      PublishPriority most = PublishPriority.BULK;
-      for (ListState list : this.lists) {
-        most = most.higher(list.priority);
-      }
-      return most;
-    }
-
-    /**
-     * Whether a list this task comes after still has other tasks waiting or running. Cleanups of
-     * the list do not count: they run last, once nothing else is waiting, so waiting for them
-     * would make this task wait for itself.
-     */
-    private boolean hasToWait(CleanupCounts cleanups) {
-      this.after.removeIf(list -> list.finished != null);
-      for (ListState predecessor : this.after) {
-        int own = this.lists.contains(predecessor) ? 1 : 0;
-        if (predecessor.open - own > 0 && predecessor.open - own > cleanups.of(predecessor)) {
-          return true;
-        }
-      }
-      return false;
-    }
-
-    private boolean waitsForForeground() {
-      return this.after.stream().anyMatch(list -> list.foreground && list.finished == null);
-    }
-  }
-
-  /** How many waiting cleanups each list has, worked out once and only if needed. */
-  private static final class CleanupCounts {
-
-    private final Collection<Entry> cleanups;
-
-    private @Nullable Map<ListState, Integer> counts;
-
-    private CleanupCounts(Collection<Entry> cleanups) {
-      this.cleanups = cleanups;
-    }
-
-    private int of(ListState list) {
-      Map<ListState, Integer> known = this.counts;
-      if (known == null) {
-        known = new HashMap<>();
-        for (Entry cleanup : this.cleanups) {
-          for (ListState owner : cleanup.lists) {
-            known.merge(owner, 1, Integer::sum);
-          }
-        }
-        this.counts = known;
-      }
-      return known.getOrDefault(list, 0);
-    }
-  }
-
-  /** An entity being published. */
-  private static final class Hold {
-
-    private final boolean foreground;
-
-    private final PublishTask task;
-
-    /** The lists waiting for the publication to end. */
-    private final Set<ListState> lists = new HashSet<>();
-
-    /** The publishing thread; unknown for a background task until its worker adopts it. */
-    private @Nullable Thread owner;
-
-    private int depth = OUTERMOST;
-
-    private Hold(boolean foreground, PublishTask task, @Nullable Thread owner) {
-      this.foreground = foreground;
-      this.task = task;
-      this.owner = owner;
-    }
-
-    private static Hold ofBackground(Entry entry) {
-      return new Hold(false, entry.task, null);
-    }
-
-    private static Hold ofForeground(Thread owner, PublishTask task) {
-      return new Hold(true, task, owner);
-    }
-
-    /** The list waits for this publication from now on. */
-    private void add(@Nullable ListState list, Instant now) {
-      if (list != null && this.lists.add(list)) {
-        list.running++;
-        if (list.started == null) {
-          list.started = now;
-        }
-      }
-    }
-  }
-
-  /** A list as the schedule keeps it: what was asked for and the counts of its tasks. */
-  private static final class ListState {
-
-    private final PublishListId id;
-
-    /** What was asked for; once the list is over, without the tasks, which are of no use then. */
-    private PublishListRequest request;
-
-    private final PublishPriority priority;
-
-    /** Whether the tasks are published by the thread that requested the list. */
-    private final boolean foreground;
-
-    /** The lists whose tasks have to be done first, as far as they were still going on. */
-    private final Set<ListState> after = new HashSet<>();
-
-    private final Instant created;
-
-    /** When the first task of the list started, or {@code null} while none has. */
-    private @Nullable Instant started;
-
-    private @Nullable Instant finished;
-
-    private int total;
-
-    /** The tasks waiting or running. */
-    private int open;
-
-    private int running;
-
-    private int done;
-
-    private int cancelled;
-
-    private final List<PublishTask> failed = new ArrayList<>();
-
-    private ListState(
-        PublishListId id, PublishListRequest request, boolean foreground, Instant created) {
-      this.id = id;
-      this.created = created;
-      this.request = request;
-      this.priority = request.priority();
-      this.foreground = foreground;
-    }
-
-    /** Drops the tasks of the request, keeping what describes the list. */
-    private void releaseTasks() {
-      this.request =
-          new PublishListRequest(
-              this.request.name(),
-              this.request.origin(),
-              this.request.cause(),
-              this.request.priority(),
-              this.request.after(),
-              List.of());
-      this.after.clear();
-    }
-
-    private PublishList snapshot() {
-      return new PublishList(
-          this.id,
-          this.request.name(),
-          this.request.origin(),
-          this.request.cause(),
-          this.priority,
-          this.request.after(),
-          this.total,
-          this.open - this.running,
-          this.running,
-          this.done,
-          this.failed,
-          this.cancelled,
-          this.created,
-          this.started,
-          this.finished);
-    }
-  }
-
-  /** The place a waiting task takes: one per entity, channel and kind of work. */
-  private record SlotKey(PublishTaskKey key, PublishTaskType.Slot slot) {
-
-    private static SlotKey of(PublishTask task) {
-      return new SlotKey(task.key(), task.type().slot());
-    }
+    waitingTask.lists.forEach(list -> hold.add(list, now));
+    this.holds.put(hold);
   }
 }
