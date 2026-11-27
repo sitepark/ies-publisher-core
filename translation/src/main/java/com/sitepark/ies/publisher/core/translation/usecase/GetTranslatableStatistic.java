@@ -7,10 +7,10 @@ import com.sitepark.ies.publisher.core.translation.port.AccessControl;
 import com.sitepark.ies.publisher.core.translation.port.PublisherNameResolver;
 import com.sitepark.ies.publisher.core.translation.port.TranslationStatisticRepository;
 import jakarta.inject.Inject;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Use case that returns the volume of texts that would have been translated, per period and
@@ -51,7 +51,8 @@ public class GetTranslatableStatistic {
     if (!this.accessControl.isAllowGetTranslationStatistic()) {
       throw new AccessDeniedException("Not allowed to get translation statistic");
     }
-    Map<String, Optional<String>> names = new ConcurrentHashMap<>();
+    @SuppressWarnings("PMD.UseConcurrentHashMap") // local, used by a sequential stream only
+    Map<String, Optional<String>> names = new HashMap<>();
     return this.repository.getTranslatable(filter).stream()
         .map(
             entry ->
