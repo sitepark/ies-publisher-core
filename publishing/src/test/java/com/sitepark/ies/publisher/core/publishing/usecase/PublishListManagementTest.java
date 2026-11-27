@@ -67,7 +67,7 @@ class PublishListManagementTest {
     EnqueuePublishTasks enqueue = new EnqueuePublishTasks(schedule);
     PublishListId first = enqueue.enqueue(list("a"));
     enqueue.enqueue(list("b"));
-    StopPublishLists stop = new StopPublishLists(ALLOWED, new CancelPublishLists(schedule));
+    StopPublishLists stop = new StopPublishLists(ALLOWED, schedule);
 
     assertThat(stop.stop(first)).as("the list was stopped").isTrue();
     assertThat(stop.stopAll()).as("one list was left to stop").isEqualTo(1);
@@ -78,7 +78,7 @@ class PublishListManagementTest {
   void refusesToStopListsForAUserWithoutAccess() {
     PublishSchedule schedule = new PublishSchedule();
     PublishListId id = new EnqueuePublishTasks(schedule).enqueue(list("a"));
-    StopPublishLists stop = new StopPublishLists(DENIED, new CancelPublishLists(schedule));
+    StopPublishLists stop = new StopPublishLists(DENIED, schedule);
 
     assertThatThrownBy(() -> stop.stop(id))
         .as("stopping a list needs the right to manage publishing")

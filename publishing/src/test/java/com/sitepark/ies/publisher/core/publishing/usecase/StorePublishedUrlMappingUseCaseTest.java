@@ -51,6 +51,23 @@ class StorePublishedUrlMappingUseCaseTest {
   }
 
   @Test
+  void duplicateIncoming_storedOnceWithoutConflict() {
+    PublishedUrlMapping newMapping = mapping(null, "/new-path", UrlMappingMode.FORWARD);
+    when(this.repository.getPublishedUrlMappingByOwner("channel-1", "owner-1"))
+        .thenReturn(List.of());
+    when(this.repository.createIfFree(newMapping)).thenReturn(Optional.of("100"));
+
+    StorePublishedUrlMappingResult changes =
+        this.useCase.storePublishedUrlMapping(ownerMappings(List.of(newMapping, newMapping)));
+
+    verify(this.repository).createIfFree(newMapping);
+    assertThat(changes.added())
+        .as("a mapping asked for twice is added once")
+        .containsExactly(newMapping.toBuilder().id("100").build());
+    assertThat(changes.conflicts()).as("and does not conflict with itself").isEmpty();
+  }
+
+  @Test
   void emptyIncoming_deleteAll() {
     PublishedUrlMapping existing = mapping("1", "/old-path", UrlMappingMode.FORWARD);
     when(this.repository.getPublishedUrlMappingByOwner("channel-1", "owner-1"))

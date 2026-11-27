@@ -33,7 +33,7 @@ public class GetLinkCheckerConfig {
    */
   public LinkCheckerConfig get() {
     if (!this.accessControl.isAllowGetLinkCheckerConfig()) {
-      throw new AccessDeniedException("Not allowed to get check results");
+      throw new AccessDeniedException("Not allowed to get the link checker config");
     }
 
     return this.linkCheckerConfigStore.get();

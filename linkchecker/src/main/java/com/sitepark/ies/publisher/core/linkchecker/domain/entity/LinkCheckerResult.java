@@ -3,7 +3,6 @@ package com.sitepark.ies.publisher.core.linkchecker.domain.entity;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -27,7 +26,7 @@ public final class LinkCheckerResult {
    * @param builder the builder holding the values to copy
    */
   public LinkCheckerResult(Builder builder) {
-    this.items = Collections.unmodifiableList(builder.items);
+    this.items = List.copyOf(builder.items);
     this.total = builder.total;
     this.start = builder.start;
     this.limit = builder.limit;
