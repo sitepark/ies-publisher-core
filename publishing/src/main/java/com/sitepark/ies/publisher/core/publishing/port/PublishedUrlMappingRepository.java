@@ -39,9 +39,10 @@ public interface PublishedUrlMappingRepository {
    * Persists the given mappings as new entries.
    *
    * @param mappings the mappings to create
-   * @return the identifier assigned to the created entry
+   * @return the created mappings in the order of {@code mappings}, each with the identifier
+   *     assigned to it; empty if {@code mappings} is empty
    */
-  String create(List<PublishedUrlMapping> mappings);
+  List<PublishedUrlMapping> create(List<PublishedUrlMapping> mappings);
 
   /**
    * Updates the given existing mappings.
