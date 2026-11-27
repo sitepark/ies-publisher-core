@@ -244,8 +244,12 @@ public final class LinkCheckerConfig {
      * Builds a new {@link LinkCheckerConfig} instance from this builder.
      *
      * @return the built instance
+     * @throws InvalidLinkCheckerConfigException if no scheduling is set
      */
     public LinkCheckerConfig build() {
+      if (this.scheduling == null) {
+        throw new InvalidLinkCheckerConfigException("Scheduling is required");
+      }
       return new LinkCheckerConfig(this);
     }
   }

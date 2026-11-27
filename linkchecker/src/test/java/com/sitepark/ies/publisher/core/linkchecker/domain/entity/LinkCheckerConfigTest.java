@@ -51,6 +51,7 @@ class LinkCheckerConfigTest {
   @Test
   void testBuilderReuseDoesNotChangeBuiltConfig() {
     LinkCheckerConfig.Builder builder = LinkCheckerConfig.builder();
+    builder.scheduling(DailyScheduling.builder().startTime(3, 0).build());
     LinkCheckerConfig config = builder.build();
     builder.exclude(new LinkCheckerExcludePattern(LinkCheckerExcludePatternType.CONTAINS, "x"));
     assertEquals(0, config.getExcludes().size(), "A built config must not change with its builder");
@@ -60,8 +61,19 @@ class LinkCheckerConfigTest {
   void testParallelDefaultsToMinimum() {
     assertEquals(
         LinkCheckerConfig.MIN_PARALLEL,
-        LinkCheckerConfig.builder().build().getParallel(),
+        LinkCheckerConfig.builder()
+            .scheduling(DailyScheduling.builder().startTime(3, 0).build())
+            .build()
+            .getParallel(),
         "Unset parallel must not be 0");
+  }
+
+  @Test
+  void testSchedulingIsRequired() {
+    assertThrows(
+        InvalidLinkCheckerConfigException.class,
+        () -> LinkCheckerConfig.builder().build(),
+        "A config without scheduling must be rejected");
   }
 
   @Test
@@ -75,15 +87,13 @@ class LinkCheckerConfigTest {
   @Test
   void testParallelToLow() {
     assertThrows(
-        InvalidLinkCheckerConfigException.class,
-        () -> LinkCheckerConfig.builder().parallel(0).build());
+        InvalidLinkCheckerConfigException.class, () -> LinkCheckerConfig.builder().parallel(0));
   }
 
   @Test
   void testParallelToHigh() {
     assertThrows(
-        InvalidLinkCheckerConfigException.class,
-        () -> LinkCheckerConfig.builder().parallel(6).build());
+        InvalidLinkCheckerConfigException.class, () -> LinkCheckerConfig.builder().parallel(6));
   }
 
   @Test

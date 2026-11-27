@@ -9,6 +9,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.sitepark.ies.publisher.core.linkchecker.domain.entity.DailyScheduling;
 import com.sitepark.ies.publisher.core.linkchecker.domain.entity.LinkCheckerConfig;
 import com.sitepark.ies.publisher.core.linkchecker.domain.entity.LinkCheckerExcludePattern;
 import com.sitepark.ies.publisher.core.linkchecker.domain.entity.LinkCheckerExcludePatternType;
@@ -50,6 +51,7 @@ class LinkCheckByHashesTest {
             .enabled(true)
             .exclude(new LinkCheckerExcludePattern(LinkCheckerExcludePatternType.CONTAINS, "test"))
             .parallel(1)
+            .scheduling(DailyScheduling.builder().startTime(3, 0).build())
             .build();
 
     when(linkCheckerConfigStore.get()).thenReturn(config);
@@ -96,7 +98,12 @@ class LinkCheckByHashesTest {
     PublishedExternalLinkRepository publishedExternalLinkRepository = mock();
     LinkCheckerConfigStore linkCheckerConfigStore = mock();
     when(linkCheckerConfigStore.get())
-        .thenReturn(LinkCheckerConfig.builder().enabled(true).parallel(2).build());
+        .thenReturn(
+            LinkCheckerConfig.builder()
+                .enabled(true)
+                .parallel(2)
+                .scheduling(DailyScheduling.builder().startTime(3, 0).build())
+                .build());
 
     LinkCheckerLink broken =
         LinkCheckerLink.builder().hash(BROKEN_HASH).url("https://broken").build();
