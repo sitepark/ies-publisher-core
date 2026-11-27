@@ -1,0 +1,130 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="600" viewBox="0 0 960 600" role="img" aria-labelledby="find-runnable-title">
+  <title id="find-runnable-title">awaitNext asks six questions in order: suspended, capacity, a ready task in queue order, anything running, only cleanups, a circle. It either starts a task or waits.</title>
+  <defs>
+    <marker id="find-runnable-ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path class="head" d="M0,0 L10,5 L0,10 z"/></marker>
+    <marker id="find-runnable-ahs" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path class="head-s" d="M0,0 L10,5 L0,10 z"/></marker>
+    <marker id="find-runnable-ahf" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path class="head-f" d="M0,0 L10,5 L0,10 z"/></marker>
+    <filter id="sh" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000000" flood-opacity="0.08"/>
+    </filter>
+    <style>
+      svg { font-family: Inter, Roboto, 'Helvetica Neue', 'DejaVu Sans', Arial, sans-serif; }
+      text { fill: #212121; font-size: 13px; }
+      .bg { fill: #ffffff; }
+      .t { font-size: 15px; font-weight: 700; }
+      .n { font-weight: 700; }
+      .sub { fill: #757575; font-size: 12px; }
+      .label { fill: #757575; font-size: 11.5px; font-weight: 600; }
+      .eyebrow { fill: #757575; font-size: 10.5px; font-weight: 700; letter-spacing: 0.08em; }
+      .code { font-family: 'JetBrains Mono', 'Roboto Mono', 'DejaVu Sans Mono', monospace; font-size: 12px; }
+      .big { font-size: 16px; font-weight: 700; }
+      .on { fill: #1d1d1b; }
+      .fgtext { fill: #6f4bb8; }
+      .card { fill: #ffffff; stroke: #bdbdbd; stroke-width: 1.25; filter: url(#sh); }
+      .ac { fill: #fef4d6; stroke: #fbba00; stroke-width: 2; filter: url(#sh); }
+      .sk { fill: #fcf5e3; stroke: #e0a500; stroke-width: 1.5; filter: url(#sh); }
+      .pm { fill: #e6f4f2; stroke: #1f9d8b; stroke-width: 1.5; filter: url(#sh); }
+      .kp { fill: #eaf1fb; stroke: #3f7fd9; stroke-width: 1.5; filter: url(#sh); }
+      .fw { fill: #efefef; stroke: #6b6b69; stroke-width: 1.5; filter: url(#sh); }
+      .fg { fill: #f2eefa; stroke: #8a63d2; stroke-width: 1.5; filter: url(#sh); }
+      .err { fill: #fbebeb; stroke: #d64545; stroke-width: 1.5; filter: url(#sh); }
+      .thick { stroke-width: 2.25; }
+      .solid-ac { fill: #fbba00; }
+      .solid-sk { fill: #e0a500; }
+      .solid-pm { fill: #1f9d8b; }
+      .solid-kp { fill: #3f7fd9; }
+      .solid-fw { fill: #6b6b69; }
+      .solid-fg { fill: #8a63d2; }
+      .soft { fill: #f5f5f5; }
+      .ghost { fill: #f5f5f5; stroke: #bdbdbd; stroke-width: 1.25; stroke-dasharray: 4 3; }
+      .frame { fill: none; stroke: #bdbdbd; stroke-width: 1.5; stroke-dasharray: 6 5; }
+      .edge { fill: none; stroke: #757575; stroke-width: 1.75; }
+      .strong { stroke: #fbba00; stroke-width: 2.75; }
+      .dashed { stroke-dasharray: 6 4; }
+      .edge-fg { fill: none; stroke: #8a63d2; stroke-width: 1.75; stroke-dasharray: 6 4; }
+      .head { fill: #757575; }
+      .head-s { fill: #fbba00; }
+      .head-f { fill: #8a63d2; }
+      .icon { fill: none; stroke: #212121; stroke-width: 2.25; stroke-linecap: round; stroke-linejoin: round; }
+      .life { stroke: #bdbdbd; stroke-width: 1.5; stroke-dasharray: 4 4; }
+      .rule { stroke: #e0e0e0; stroke-width: 1; }
+    </style>
+  </defs>
+  <rect class="bg" width="960" height="600" rx="16"/>
+  <rect class="ac" x="300" y="20" width="200" height="36" rx="18"/>
+  <text class="code n" x="400" y="43" text-anchor="middle">awaitNext(capacity)</text>
+  <path class="edge" d="M400,56 V76" marker-end="url(#find-runnable-ah)"/>
+
+  <rect class="fw" x="20" y="80" width="180" height="486" rx="14"/>
+  <text class="eyebrow" x="110" y="104" text-anchor="middle">OUTCOME</text>
+  <text class="t" x="110" y="124" text-anchor="middle">wait</text>
+  <text class="code" x="110" y="146" text-anchor="middle">changed.await(1 s)</text>
+  <text class="sub" x="34" y="178">Woken by signalAll(),</text>
+  <text class="sub" x="34" y="196">or after one second:</text>
+  <text class="sub" x="34" y="214">the capacity may have</text>
+  <text class="sub" x="34" y="232">changed meanwhile.</text>
+  <line class="rule" x1="34" y1="252" x2="186" y2="252" style="stroke:#bdbdbd"/>
+  <text class="sub" x="34" y="276">Nothing waits and</text>
+  <text class="sub" x="34" y="294">nothing runs? Then it</text>
+  <text class="sub" x="34" y="312">returns empty once:</text>
+  <text class="sub" x="34" y="330">everything is drained.</text>
+  <path class="edge" d="M110,80 V38 H296" marker-end="url(#find-runnable-ah)"/>
+  <text class="label" x="120" y="30">check again</text>
+
+  <rect class="pm" x="620" y="250" width="320" height="316" rx="14"/>
+  <text class="eyebrow" x="780" y="274" text-anchor="middle">OUTCOME</text>
+  <text class="t" x="780" y="294" text-anchor="middle">start(task)</text>
+  <text class="sub" x="640" y="324">• taken out of WaitingTasks</text>
+  <text class="sub" x="640" y="346">• its Hold goes into EntityHolds:</text>
+  <text class="sub" x="652" y="364">the entity is now held</text>
+  <text class="sub" x="640" y="386">• its lists count it as running</text>
+  <text class="sub" x="640" y="408">• handed to the dispatcher</text>
+  <text class="code" x="640" y="434">return Optional.of(task)</text>
+  <text class="sub" x="640" y="458">← for this one: the oldest cleanup</text>
+  <text class="sub" x="640" y="526">← for this one: the oldest task</text>
+  <rect class="card" x="240" y="80" width="320" height="52" rx="10"/>
+  <text class="n" x="256" y="102">Is publishing suspended?</text>
+  <text class="code sub" x="256" y="122">EntityHolds.isSuspended()</text>
+  <rect class="card" x="240" y="156" width="320" height="70" rx="10"/>
+  <text class="n" x="256" y="178">May another background task start?</text>
+  <text class="sub" x="256" y="197">no cleanup runs · fewer run than allowed</text>
+  <text class="code sub" x="256" y="216">EntityHolds.mayStartBackground()</text>
+  <rect class="card" x="240" y="250" width="320" height="70" rx="10"/>
+  <text class="n" x="256" y="272">Is a task in queue order ready?</text>
+  <text class="sub" x="256" y="291">entity free and no earlier list to wait for</text>
+  <text class="code sub" x="256" y="310">WaitingTask.hasToWait()</text>
+  <rect class="card" x="240" y="344" width="320" height="52" rx="10"/>
+  <text class="n" x="256" y="366">Is anything being published?</text>
+  <text class="code sub" x="256" y="386">EntityHolds.isEmpty()</text>
+  <rect class="card" x="240" y="420" width="320" height="52" rx="10"/>
+  <text class="n" x="256" y="442">Are only cleanups waiting?</text>
+  <text class="code sub" x="256" y="462">WaitingTasks.onlyCleanups()</text>
+  <rect class="card" x="240" y="496" width="320" height="70" rx="10"/>
+  <text class="n" x="256" y="518">Lists waiting for each other in a circle?</text>
+  <text class="sub" x="256" y="537">then the oldest free task runs to break it</text>
+  <text class="code sub" x="256" y="556">oldestWaitingInACircle()</text>
+  <path class="edge" d="M400,132 V152" marker-end="url(#find-runnable-ah)"/>
+  <text class="label" x="408" y="147">no</text>
+  <path class="edge" d="M400,226 V246" marker-end="url(#find-runnable-ah)"/>
+  <text class="label" x="408" y="241">yes</text>
+  <path class="edge" d="M400,320 V340" marker-end="url(#find-runnable-ah)"/>
+  <text class="label" x="408" y="335">no</text>
+  <path class="edge" d="M400,396 V416" marker-end="url(#find-runnable-ah)"/>
+  <text class="label" x="408" y="411">no</text>
+  <path class="edge" d="M400,472 V492" marker-end="url(#find-runnable-ah)"/>
+  <text class="label" x="408" y="487">no</text>
+  <path class="edge" d="M240,106 H204" marker-end="url(#find-runnable-ah)"/>
+  <text class="label" x="222" y="99" text-anchor="middle">yes</text>
+  <path class="edge" d="M240,191 H204" marker-end="url(#find-runnable-ah)"/>
+  <text class="label" x="222" y="184" text-anchor="middle">no</text>
+  <path class="edge" d="M240,370 H204" marker-end="url(#find-runnable-ah)"/>
+  <text class="label" x="222" y="363" text-anchor="middle">yes</text>
+  <path class="edge" d="M240,540 H204" marker-end="url(#find-runnable-ah)"/>
+  <text class="label" x="222" y="533" text-anchor="middle">no</text>
+  <path class="edge strong" d="M560,285 H614" marker-end="url(#find-runnable-ahs)"/>
+  <text class="label" x="588" y="277" text-anchor="middle">yes</text>
+  <path class="edge strong" d="M560,446 H614" marker-end="url(#find-runnable-ahs)"/>
+  <text class="label" x="588" y="438" text-anchor="middle">yes</text>
+  <path class="edge strong" d="M560,522 H614" marker-end="url(#find-runnable-ahs)"/>
+  <text class="label" x="588" y="514" text-anchor="middle">yes</text>
+</svg>

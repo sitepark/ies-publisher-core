@@ -1,0 +1,109 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="430" viewBox="0 0 960 430" role="img" aria-labelledby="task-lifecycle-title">
+  <title id="task-lifecycle-title">A task is requested, waits in WaitingTasks, runs while EntityHolds holds its entity, and ends done or failed. It can be merged, cancelled, taken over by the foreground or tried again once.</title>
+  <defs>
+    <marker id="task-lifecycle-ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path class="head" d="M0,0 L10,5 L0,10 z"/></marker>
+    <marker id="task-lifecycle-ahs" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path class="head-s" d="M0,0 L10,5 L0,10 z"/></marker>
+    <marker id="task-lifecycle-ahf" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path class="head-f" d="M0,0 L10,5 L0,10 z"/></marker>
+    <filter id="sh" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000000" flood-opacity="0.08"/>
+    </filter>
+    <style>
+      svg { font-family: Inter, Roboto, 'Helvetica Neue', 'DejaVu Sans', Arial, sans-serif; }
+      text { fill: #212121; font-size: 13px; }
+      .bg { fill: #ffffff; }
+      .t { font-size: 15px; font-weight: 700; }
+      .n { font-weight: 700; }
+      .sub { fill: #757575; font-size: 12px; }
+      .label { fill: #757575; font-size: 11.5px; font-weight: 600; }
+      .eyebrow { fill: #757575; font-size: 10.5px; font-weight: 700; letter-spacing: 0.08em; }
+      .code { font-family: 'JetBrains Mono', 'Roboto Mono', 'DejaVu Sans Mono', monospace; font-size: 12px; }
+      .big { font-size: 16px; font-weight: 700; }
+      .on { fill: #1d1d1b; }
+      .fgtext { fill: #6f4bb8; }
+      .card { fill: #ffffff; stroke: #bdbdbd; stroke-width: 1.25; filter: url(#sh); }
+      .ac { fill: #fef4d6; stroke: #fbba00; stroke-width: 2; filter: url(#sh); }
+      .sk { fill: #fcf5e3; stroke: #e0a500; stroke-width: 1.5; filter: url(#sh); }
+      .pm { fill: #e6f4f2; stroke: #1f9d8b; stroke-width: 1.5; filter: url(#sh); }
+      .kp { fill: #eaf1fb; stroke: #3f7fd9; stroke-width: 1.5; filter: url(#sh); }
+      .fw { fill: #efefef; stroke: #6b6b69; stroke-width: 1.5; filter: url(#sh); }
+      .fg { fill: #f2eefa; stroke: #8a63d2; stroke-width: 1.5; filter: url(#sh); }
+      .err { fill: #fbebeb; stroke: #d64545; stroke-width: 1.5; filter: url(#sh); }
+      .thick { stroke-width: 2.25; }
+      .solid-ac { fill: #fbba00; }
+      .solid-sk { fill: #e0a500; }
+      .solid-pm { fill: #1f9d8b; }
+      .solid-kp { fill: #3f7fd9; }
+      .solid-fw { fill: #6b6b69; }
+      .solid-fg { fill: #8a63d2; }
+      .soft { fill: #f5f5f5; }
+      .ghost { fill: #f5f5f5; stroke: #bdbdbd; stroke-width: 1.25; stroke-dasharray: 4 3; }
+      .frame { fill: none; stroke: #bdbdbd; stroke-width: 1.5; stroke-dasharray: 6 5; }
+      .edge { fill: none; stroke: #757575; stroke-width: 1.75; }
+      .strong { stroke: #fbba00; stroke-width: 2.75; }
+      .dashed { stroke-dasharray: 6 4; }
+      .edge-fg { fill: none; stroke: #8a63d2; stroke-width: 1.75; stroke-dasharray: 6 4; }
+      .head { fill: #757575; }
+      .head-s { fill: #fbba00; }
+      .head-f { fill: #8a63d2; }
+      .icon { fill: none; stroke: #212121; stroke-width: 2.25; stroke-linecap: round; stroke-linejoin: round; }
+      .life { stroke: #bdbdbd; stroke-width: 1.5; stroke-dasharray: 4 4; }
+      .rule { stroke: #e0e0e0; stroke-width: 1; }
+    </style>
+  </defs>
+  <rect class="bg" width="960" height="430" rx="16"/>
+  <rect class="fg" x="610" y="18" width="150" height="40" rx="10"/>
+  <text class="code fgtext" x="685" y="43" text-anchor="middle">enterForeground()</text>
+  <path class="edge-fg" d="M685,58 V126" marker-end="url(#task-lifecycle-ahf)"/>
+
+  <rect class="card" x="30" y="140" width="150" height="70" rx="12"/>
+  <text class="t" x="105" y="169" text-anchor="middle">requested</text>
+  <text class="code sub" x="105" y="191" text-anchor="middle">open(request)</text>
+
+  <rect class="sk thick" x="270" y="130" width="190" height="90" rx="12"/>
+  <text class="t" x="365" y="158" text-anchor="middle">waiting</text>
+  <text class="code" x="365" y="180" text-anchor="middle">WaitingTasks</text>
+  <text class="sub" x="365" y="202" text-anchor="middle">in queue order</text>
+
+  <rect class="pm thick" x="560" y="130" width="190" height="90" rx="12"/>
+  <text class="t" x="655" y="158" text-anchor="middle">running</text>
+  <text class="code" x="655" y="180" text-anchor="middle">EntityHolds · Hold</text>
+  <text class="sub" x="655" y="202" text-anchor="middle">the entity is held</text>
+
+  <rect class="solid-pm" x="820" y="60" width="120" height="60" rx="12"/>
+  <text class="t on" x="880" y="86" text-anchor="middle">done</text>
+  <text class="on" x="880" y="106" text-anchor="middle" style="font-size:12px">counted in list</text>
+
+  <rect class="err" x="820" y="230" width="120" height="60" rx="12"/>
+  <text class="t" x="880" y="256" text-anchor="middle">failed</text>
+  <text class="sub" x="880" y="276" text-anchor="middle">kept in list</text>
+
+  <rect class="fw" x="200" y="330" width="170" height="56" rx="12"/>
+  <text class="t" x="285" y="354" text-anchor="middle">cancelled</text>
+  <text class="sub" x="285" y="374" text-anchor="middle">counted in list</text>
+
+  <path class="edge" d="M180,175 H266" marker-end="url(#task-lifecycle-ah)"/>
+  <text class="label code" x="223" y="166" text-anchor="middle">add()</text>
+  <path class="edge strong" d="M460,175 H554" marker-end="url(#task-lifecycle-ahs)"/>
+  <text class="label code" x="508" y="166" text-anchor="middle">start()</text>
+  <path class="edge" d="M750,155 L816,100" marker-end="url(#task-lifecycle-ah)"/>
+  <text class="label code" x="770" y="116">DONE</text>
+  <path class="edge" d="M750,195 L816,250" marker-end="url(#task-lifecycle-ah)"/>
+  <text class="label code" x="752" y="264">FAILED</text>
+
+  <path class="edge" d="M640,220 C640,295 420,295 420,224" marker-end="url(#task-lifecycle-ah)"/>
+  <text class="label code" x="530" y="304" text-anchor="middle">RETRY</text>
+  <text class="sub" x="530" y="322" text-anchor="middle">waits again as next attempt (once)</text>
+
+  <path class="edge" d="M300,220 V326" marker-end="url(#task-lifecycle-ah)"/>
+  <text class="label code" x="292" y="266" text-anchor="end">cancel(list)</text>
+  <text class="sub" x="292" y="284" text-anchor="end">if no other list</text>
+  <text class="sub" x="292" y="300" text-anchor="end">wants the task</text>
+
+  <path class="edge" d="M305,130 C305,75 385,75 385,126" marker-end="url(#task-lifecycle-ah)"/>
+  <text class="sub" x="330" y="66" text-anchor="middle">requested again → merged</text>
+
+  <path class="edge-fg" d="M440,130 C470,80 560,70 600,126" marker-end="url(#task-lifecycle-ahf)"/>
+  <text class="label fgtext" x="515" y="70" text-anchor="middle">taken over</text>
+
+  <text class="sub" x="20" y="416">Every change happens under the lock; afterwards signalAll() wakes every thread waiting for the schedule.</text>
+</svg>
