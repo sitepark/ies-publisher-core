@@ -20,6 +20,7 @@ class LinkCheckerLinkFilterTest {
     EqualsVerifier.forClass(LinkCheckerLinkFilter.class).verify();
   }
 
+  @SuppressWarnings("PMD.UnitTestContainsTooManyAsserts")
   @Test
   void testBuilderReuseDoesNotChangeBuiltFilter() {
     LinkCheckerLinkFilter.Builder builder = LinkCheckerLinkFilter.builder().term("a");

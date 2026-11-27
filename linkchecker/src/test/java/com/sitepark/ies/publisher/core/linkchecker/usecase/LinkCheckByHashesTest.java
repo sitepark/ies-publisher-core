@@ -26,6 +26,8 @@ import org.junit.jupiter.api.Test;
 
 class LinkCheckByHashesTest {
 
+  private static final String BROKEN_HASH = "h1";
+
   @Test
   void testAccessDenied() {
     AccessControl accessControl = mock();
@@ -85,6 +87,7 @@ class LinkCheckByHashesTest {
         "Unexpected result");
   }
 
+  @SuppressWarnings("PMD.UnitTestContainsTooManyAsserts")
   @Test
   void testFailingCheckDoesNotLoseOtherResults() {
 
@@ -95,7 +98,8 @@ class LinkCheckByHashesTest {
     when(linkCheckerConfigStore.get())
         .thenReturn(LinkCheckerConfig.builder().enabled(true).parallel(2).build());
 
-    LinkCheckerLink broken = LinkCheckerLink.builder().hash("h1").url("https://broken").build();
+    LinkCheckerLink broken =
+        LinkCheckerLink.builder().hash(BROKEN_HASH).url("https://broken").build();
     LinkCheckerLink fine = LinkCheckerLink.builder().hash("h2").url("https://fine").build();
     when(publishedExternalLinkRepository.getLinks(List.of("h1", "h2")))
         .thenReturn(List.of(broken, fine));
@@ -105,7 +109,7 @@ class LinkCheckByHashesTest {
         .thenAnswer(
             invocation -> {
               LinkCheckerLink link = invocation.getArgument(0);
-              if ("h1".equals(link.getHash())) {
+              if (BROKEN_HASH.equals(link.getHash())) {
                 throw new IllegalStateException("boom");
               }
               return LinkCheckerResultItem.builder().status(StatusType.OK).build();

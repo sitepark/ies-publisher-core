@@ -80,6 +80,7 @@ import org.jspecify.annotations.Nullable;
 @Singleton
 // The maps are guarded by the lock; entries, holds and lists are private state of this class.
 @SuppressWarnings({
+  "PMD.GodClass",
   "PMD.TooManyMethods",
   "PMD.CyclomaticComplexity",
   "PMD.CouplingBetweenObjects",

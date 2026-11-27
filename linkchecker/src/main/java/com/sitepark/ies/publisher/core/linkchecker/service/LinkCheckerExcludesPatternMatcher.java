@@ -69,68 +69,98 @@ public class LinkCheckerExcludesPatternMatcher {
    * {@code {a,b}} work as in {@link java.nio.file.FileSystem#getPathMatcher(String)}.
    */
   private static String globToRegex(String glob) {
-    StringBuilder regex = new StringBuilder();
-    boolean inGroup = false;
-    int i = 0;
-    while (i < glob.length()) {
-      char c = glob.charAt(i);
-      switch (c) {
-        case '*' -> {
-          if (i + 1 < glob.length() && glob.charAt(i + 1) == '*') {
-            regex.append(".*");
-            i++;
-          } else {
-            regex.append("[^/]*");
-          }
-        }
-        case '?' -> regex.append("[^/]");
-        case '\\' -> {
-          if (i + 1 >= glob.length()) {
-            throw new InvalidLinkCheckerConfigException(
-                "Invalid glob '" + glob + "': trailing backslash");
-          }
-          i++;
-          regex.append(Pattern.quote(String.valueOf(glob.charAt(i))));
-        }
-        case '[' -> i = appendCharacterClass(glob, i, regex);
-        case '{' -> {
-          if (inGroup) {
-            throw new InvalidLinkCheckerConfigException(
-                "Invalid glob '" + glob + "': nested groups are not supported");
-          }
-          inGroup = true;
-          regex.append("(?:");
-        }
-        case '}' -> {
-          if (inGroup) {
-            inGroup = false;
-            regex.append(')');
-          } else {
-            regex.append(Pattern.quote("}"));
-          }
-        }
-        case ',' -> regex.append(inGroup ? "|" : Pattern.quote(","));
-        default -> regex.append(Pattern.quote(String.valueOf(c)));
-      }
-      i++;
-    }
-    if (inGroup) {
-      throw new InvalidLinkCheckerConfigException("Invalid glob '" + glob + "': missing '}'");
-    }
-    return regex.toString();
+    return new GlobTranslator(glob).translate();
   }
 
-  /** Appends the character class starting at {@code start}, returns the index of its {@code ]}. */
-  private static int appendCharacterClass(String glob, int start, StringBuilder regex) {
-    int end = glob.indexOf(']', start + 2);
-    if (end < 0) {
-      throw new InvalidLinkCheckerConfigException("Invalid glob '" + glob + "': missing ']'");
+  /** Walks a glob character by character and builds the regular expression for it. */
+  private static final class GlobTranslator {
+
+    private final String glob;
+
+    private boolean inGroup;
+
+    private int pos;
+
+    private GlobTranslator(String glob) {
+      this.glob = glob;
     }
-    String content = glob.substring(start + 1, end);
-    if (content.startsWith("!")) {
-      content = "^" + content.substring(1);
+
+    private String translate() {
+      StringBuilder regex = new StringBuilder();
+      while (this.pos < this.glob.length()) {
+        this.translateNext(regex);
+        this.pos++;
+      }
+      if (this.inGroup) {
+        throw this.invalid("missing '}'");
+      }
+      return regex.toString();
     }
-    regex.append('[').append(content.replace("\\", "\\\\").replace("[", "\\[")).append(']');
-    return end;
+
+    private void translateNext(StringBuilder regex) {
+      char c = this.glob.charAt(this.pos);
+      switch (c) {
+        case '*' -> this.star(regex);
+        case '?' -> regex.append("[^/]");
+        case '\\' -> this.escaped(regex);
+        case '[' -> this.characterClass(regex);
+        case '{' -> this.groupStart(regex);
+        case '}' -> this.groupEnd(regex);
+        case ',' -> regex.append(this.inGroup ? "|" : Pattern.quote(","));
+        default -> regex.append(Pattern.quote(String.valueOf(c)));
+      }
+    }
+
+    private void star(StringBuilder regex) {
+      if (this.pos + 1 < this.glob.length() && this.glob.charAt(this.pos + 1) == '*') {
+        regex.append(".*");
+        this.pos++;
+      } else {
+        regex.append("[^/]*");
+      }
+    }
+
+    private void escaped(StringBuilder regex) {
+      if (this.pos + 1 >= this.glob.length()) {
+        throw this.invalid("trailing backslash");
+      }
+      this.pos++;
+      regex.append(Pattern.quote(String.valueOf(this.glob.charAt(this.pos))));
+    }
+
+    private void groupStart(StringBuilder regex) {
+      if (this.inGroup) {
+        throw this.invalid("nested groups are not supported");
+      }
+      this.inGroup = true;
+      regex.append("(?:");
+    }
+
+    private void groupEnd(StringBuilder regex) {
+      if (this.inGroup) {
+        this.inGroup = false;
+        regex.append(')');
+      } else {
+        regex.append(Pattern.quote("}"));
+      }
+    }
+
+    /** Appends the character class starting at the current position and moves to its {@code ]}. */
+    private void characterClass(StringBuilder regex) {
+      int end = this.glob.indexOf(']', this.pos + 2);
+      if (end < 0) {
+        throw this.invalid("missing ']'");
+      }
+      String content = this.glob.substring(this.pos + 1, end);
+      if (content.startsWith("!")) {
+        content = "^" + content.substring(1);
+      }
+      regex.append('[').append(content.replace("\\", "\\\\").replace("[", "\\[")).append(']');
+      this.pos = end;
+    }
+
+    private InvalidLinkCheckerConfigException invalid(String reason) {
+      return new InvalidLinkCheckerConfigException("Invalid glob '" + this.glob + "': " + reason);
+    }
   }
 }
