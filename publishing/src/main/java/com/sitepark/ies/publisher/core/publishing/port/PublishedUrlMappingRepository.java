@@ -10,10 +10,10 @@ public interface PublishedUrlMappingRepository {
   /**
    * Returns all published URL mappings of the given channel.
    *
-   * @param channelD the identifier of the channel to load mappings for
+   * @param channelId the identifier of the channel to load mappings for
    * @return the mappings of the channel; never {@code null}
    */
-  List<PublishedUrlMapping> getPublishedUrlMapping(String channelD);
+  List<PublishedUrlMapping> getPublishedUrlMapping(String channelId);
 
   /**
    * Returns the published URL mappings of a single owner within the given channel.
