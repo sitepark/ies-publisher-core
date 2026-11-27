@@ -1,9 +1,9 @@
 package com.sitepark.ies.publisher.core.publishing.usecase;
 
+import com.sitepark.ies.publisher.core.publishing.domain.service.PublishSchedule;
 import com.sitepark.ies.publisher.core.publishing.domain.value.PublishQueueStatus;
 import com.sitepark.ies.publisher.core.publishing.domain.value.PublishTaskKey;
 import com.sitepark.ies.publisher.core.publishing.domain.value.PublishTaskType;
-import com.sitepark.ies.publisher.core.publishing.service.PublishSchedule;
 import jakarta.inject.Inject;
 
 /** Tells where background and foreground publishing stand. */

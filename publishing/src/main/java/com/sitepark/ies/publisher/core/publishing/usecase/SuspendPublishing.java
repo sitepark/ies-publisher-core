@@ -1,6 +1,6 @@
 package com.sitepark.ies.publisher.core.publishing.usecase;
 
-import com.sitepark.ies.publisher.core.publishing.service.PublishSchedule;
+import com.sitepark.ies.publisher.core.publishing.domain.service.PublishSchedule;
 import jakarta.inject.Inject;
 
 /**

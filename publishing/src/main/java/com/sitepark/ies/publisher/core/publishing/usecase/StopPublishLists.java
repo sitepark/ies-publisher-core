@@ -1,9 +1,9 @@
 package com.sitepark.ies.publisher.core.publishing.usecase;
 
 import com.sitepark.ies.publisher.core.publishing.domain.exception.AccessDeniedException;
+import com.sitepark.ies.publisher.core.publishing.domain.service.PublishSchedule;
 import com.sitepark.ies.publisher.core.publishing.domain.value.PublishListId;
 import com.sitepark.ies.publisher.core.publishing.port.AccessControl;
-import com.sitepark.ies.publisher.core.publishing.service.PublishSchedule;
 import jakarta.inject.Inject;
 
 /**
