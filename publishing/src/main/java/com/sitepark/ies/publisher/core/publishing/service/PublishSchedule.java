@@ -27,6 +27,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableSet;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
@@ -60,8 +61,10 @@ import org.jspecify.annotations.Nullable;
  *   <li>A cleanup runs alone, once no other task is waiting and nothing is being published. No
  *       background task starts while it runs.
  *   <li>While a publication runs in the foreground, fewer background tasks are started.
- *   <li>A foreground publication takes over a waiting task of its entity, unless that task waits
- *       for another list, which the foreground cannot know to be done.
+ *   <li>A foreground publication takes over a waiting task of its entity if that does the same
+ *       work and asks for no more, options and attachment included. A task that asks for more, or
+ *       for something else - revoking instead of publishing - stays and runs afterwards, as does
+ *       one that waits for another list, which the foreground cannot know to be done.
  *   <li>Cancelling a list drops its waiting tasks, unless another list wants them too. What is
  *       being published is finished.
  * </ul>
@@ -467,8 +470,9 @@ public class PublishSchedule {
 
   /**
    * Waits until the entity of the task may be published in the foreground and marks it as being
-   * published. A task waiting for the same work is taken over, with the lists that want it, since
-   * the foreground does it now; a task that waits for another list stays. Has to be paired with
+   * published. A task waiting for the same work - the same type, asking for no more than the
+   * foreground task does - is taken over, with the lists that want it, since the foreground does
+   * it now; any other task stays, and so does one that waits for another list. Has to be paired with
    * {@link #leaveForeground}.
    *
    * @param task what the foreground is about to do
@@ -496,7 +500,7 @@ public class PublishSchedule {
       hold.add(list);
       this.holds.put(key, hold);
       Entry covered = this.waiting.get(SlotKey.of(task));
-      if (covered != null && task.type() != PublishTaskType.CLEANUP && !covered.hasToWait()) {
+      if (covered != null && covers(task, covered.task) && !covered.hasToWait()) {
         this.remove(covered);
         // whoever asked for the task is served by the foreground
         covered.lists.forEach(hold::add);
@@ -770,6 +774,19 @@ public class PublishSchedule {
       entry.after.addAll(list.after);
     }
     entry.priority = entry.mostUrgent();
+  }
+
+  /**
+   * Whether the foreground doing a task serves a waiting task as well: it does the same work, with
+   * everything the waiting task asked for. Otherwise the waiting task stays and runs afterwards -
+   * an extra run is harmless, a lost option or a revoked entity published again is not.
+   */
+  private static boolean covers(PublishTask foreground, PublishTask waiting) {
+    return foreground.type() != PublishTaskType.CLEANUP
+        && foreground.type() == waiting.type()
+        && foreground.options().merge(waiting.options()).equals(foreground.options())
+        && (waiting.attachment() == null
+            || Objects.equals(waiting.attachment(), foreground.attachment()));
   }
 
   /** One task for two requests: the younger says what to do, neither loses what it asked for. */

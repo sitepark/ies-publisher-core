@@ -422,6 +422,39 @@ class PublishScheduleTest {
   }
 
   @Test
+  void foregroundPublishingLeavesAWaitingRevokeAlone() {
+    this.open(PublishPriority.URGENT, revoke("a"));
+
+    this.schedule.enterForeground(publish("a"));
+
+    assertThat(this.schedule.isWaiting(key("a"), PublishTaskType.DEPUBLISH))
+        .as("publishing in the foreground does not serve a request to revoke the entity")
+        .isTrue();
+  }
+
+  @Test
+  void foregroundLeavesAWaitingTaskAskingForMoreAlone() {
+    this.open(PublishPriority.URGENT, publish("a").withOptions(new PublishTaskOptions(true, true)));
+
+    this.schedule.enterForeground(publish("a"));
+
+    assertThat(this.schedule.status().waiting())
+        .as("the waiting task forces scaled images, the foreground task does not")
+        .isEqualTo(1);
+  }
+
+  @Test
+  void foregroundTakesOverAWaitingTaskAskingForLess() {
+    this.urgent("a");
+
+    this.schedule.enterForeground(publish("a").withOptions(new PublishTaskOptions(true, true)));
+
+    assertThat(this.schedule.status().waiting())
+        .as("the foreground task does everything the waiting task asked for")
+        .isZero();
+  }
+
+  @Test
   void aThreadInTheForegroundIsPublishing() {
     this.schedule.enterForeground(publish("a"));
 
