@@ -98,7 +98,7 @@ public class PublishSchedule {
   private static final int OUTERMOST = 1;
 
   private static final DateTimeFormatter ID_TIME =
-      DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss").withZone(ZoneOffset.UTC);
+      DateTimeFormatter.ofPattern("yyyyMMdd-HHmmssSSS").withZone(ZoneOffset.UTC);
 
   private static final Comparator<Entry> BY_SEQUENCE = Comparator.comparingLong(e -> e.sequence);
 
@@ -560,7 +560,11 @@ public class PublishSchedule {
     }
   }
 
-  /** Resumes publishing after {@link #suspend}. */
+  /**
+   * Resumes publishing after {@link #suspend}. Meant to be called by the thread that suspended. A
+   * thread that did not suspend lifts the oldest suspension instead, so a suspension is not kept
+   * for good by a thread that is gone.
+   */
   public void resume() {
     this.lock.lock();
     try {
@@ -632,7 +636,7 @@ public class PublishSchedule {
   private ListState register(PublishListRequest request, boolean foreground) {
     this.listCounter++;
     PublishListId id =
-        new PublishListId(this.idPrefix + "-" + String.format("%06d", this.listCounter));
+        new PublishListId(this.idPrefix + "-" + String.format("%012d", this.listCounter));
     ListState list = new ListState(id, request, foreground);
     for (PublishListId predecessor : request.after()) {
       ListState known = this.openLists.get(predecessor);
@@ -646,6 +650,7 @@ public class PublishSchedule {
   }
 
   private @Nullable ListState find(PublishListId id) {
+    this.dropExpiredLists();
     ListState active = this.openLists.get(id);
     if (active != null) {
       return active;

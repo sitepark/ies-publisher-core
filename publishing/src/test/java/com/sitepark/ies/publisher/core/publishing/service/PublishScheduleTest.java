@@ -572,6 +572,29 @@ class PublishScheduleTest {
   }
 
   @Test
+  void doesNotFindAListThatIsOverForLongerThanTheLifetime() throws InterruptedException {
+    this.schedule = new PublishSchedule(new Retention(20, Duration.ofMillis(20)));
+    PublishListId id = this.urgent();
+    Thread.sleep(60);
+
+    assertThat(this.schedule.list(id)).as("an expired list is not looked up any more").isEmpty();
+    assertThatThrownBy(() -> this.schedule.await(id))
+        .as("and is unknown to whoever waits for it")
+        .isInstanceOf(IllegalArgumentException.class);
+  }
+
+  @Test
+  void idsOfListsStaySortableByTheTimeTheyWereRequested() {
+    PublishListId first = this.urgent();
+    PublishListId second = this.urgent();
+
+    assertThat(first.value())
+        .as("fixed width, so text order is request order")
+        .matches("\\d{8}-\\d{9}-\\d{12}");
+    assertThat(first.value()).as("the list requested first sorts first").isLessThan(second.value());
+  }
+
+  @Test
   void keepsAListThatIsStillGoingOnWhateverItsAge() throws InterruptedException {
     this.schedule = new PublishSchedule(new Retention(0, Duration.ofMillis(1)));
     this.urgent("a");
