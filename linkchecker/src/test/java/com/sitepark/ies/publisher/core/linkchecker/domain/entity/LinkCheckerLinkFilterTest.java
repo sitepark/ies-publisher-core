@@ -21,6 +21,17 @@ class LinkCheckerLinkFilterTest {
   }
 
   @Test
+  void testBuilderReuseDoesNotChangeBuiltFilter() {
+    LinkCheckerLinkFilter.Builder builder = LinkCheckerLinkFilter.builder().term("a");
+    LinkCheckerLinkFilter filter = builder.build();
+    builder.term("b").statusType(StatusType.OK);
+    assertEquals(
+        List.of("a"), filter.getTerms(), "A built filter must not change with its builder");
+    assertEquals(
+        List.of(), filter.getStatusTypes(), "A built filter must not change with its builder");
+  }
+
+  @Test
   void testToString() {
     ToStringVerifier.forClass(LinkCheckerLinkFilter.class)
         .withClassName(NameStyle.SIMPLE_NAME)

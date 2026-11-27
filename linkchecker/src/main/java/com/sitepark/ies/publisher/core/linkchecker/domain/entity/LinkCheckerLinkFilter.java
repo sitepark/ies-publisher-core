@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -18,8 +17,8 @@ public final class LinkCheckerLinkFilter {
   private final List<StatusType> statusTypes;
 
   private LinkCheckerLinkFilter(Builder builder) {
-    this.terms = Collections.unmodifiableList(builder.terms);
-    this.statusTypes = Collections.unmodifiableList(builder.statusTypes);
+    this.terms = List.copyOf(builder.terms);
+    this.statusTypes = List.copyOf(builder.statusTypes);
   }
 
   /**

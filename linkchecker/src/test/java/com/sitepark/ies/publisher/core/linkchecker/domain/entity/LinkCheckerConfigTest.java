@@ -51,6 +51,30 @@ class LinkCheckerConfigTest {
   }
 
   @Test
+  void testBuilderReuseDoesNotChangeBuiltConfig() {
+    LinkCheckerConfig.Builder builder = LinkCheckerConfig.builder();
+    LinkCheckerConfig config = builder.build();
+    builder.exclude(new LinkCheckerExcludePattern(LinkCheckerExcludePatternType.CONTAINS, "x"));
+    assertEquals(0, config.getExcludes().size(), "A built config must not change with its builder");
+  }
+
+  @Test
+  void testParallelDefaultsToMinimum() {
+    assertEquals(
+        LinkCheckerConfig.MIN_PARALLEL,
+        LinkCheckerConfig.builder().build().getParallel(),
+        "Unset parallel must not be 0");
+  }
+
+  @Test
+  void testNegativeTimeout() {
+    assertThrows(
+        InvalidLinkCheckerConfigException.class,
+        () -> LinkCheckerConfig.builder().timeout(-1),
+        "A negative timeout must be rejected");
+  }
+
+  @Test
   void testParallelToLow() {
     assertThrows(
         InvalidLinkCheckerConfigException.class,
