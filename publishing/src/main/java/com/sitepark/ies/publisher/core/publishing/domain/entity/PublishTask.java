@@ -3,6 +3,7 @@ package com.sitepark.ies.publisher.core.publishing.domain.entity;
 import com.sitepark.ies.publisher.core.publishing.domain.value.PublishTaskKey;
 import com.sitepark.ies.publisher.core.publishing.domain.value.PublishTaskOptions;
 import com.sitepark.ies.publisher.core.publishing.domain.value.PublishTaskType;
+import java.util.Objects;
 import org.jspecify.annotations.Nullable;
 
 /**
@@ -31,19 +32,13 @@ public record PublishTask(
   /**
    * Validates that key, type and options are present.
    *
-   * @throws IllegalArgumentException if {@code key}, {@code type} or {@code options} is {@code
-   *     null}, or {@code attempt} is negative
+   * @throws NullPointerException if {@code key}, {@code type} or {@code options} is {@code null}
+   * @throws IllegalArgumentException if {@code attempt} is negative
    */
   public PublishTask {
-    if (key == null) {
-      throw new IllegalArgumentException("Key must not be null");
-    }
-    if (type == null) {
-      throw new IllegalArgumentException("Type must not be null");
-    }
-    if (options == null) {
-      throw new IllegalArgumentException("Options must not be null");
-    }
+    Objects.requireNonNull(key, "Key must not be null");
+    Objects.requireNonNull(type, "Type must not be null");
+    Objects.requireNonNull(options, "Options must not be null");
     if (attempt < 0) {
       throw new IllegalArgumentException("Attempt must not be negative");
     }

@@ -97,21 +97,21 @@ class PublishedFileEntryTest {
   void rejectsMissingValues() {
     assertThatThrownBy(() -> complete().key(null).build())
         .as("key")
-        .isInstanceOf(IllegalArgumentException.class);
+        .isInstanceOf(NullPointerException.class);
     assertThatThrownBy(() -> complete().type(null).build())
         .as("type")
-        .isInstanceOf(IllegalArgumentException.class);
+        .isInstanceOf(NullPointerException.class);
     assertThatThrownBy(() -> complete().status(null).build())
         .as("status")
-        .isInstanceOf(IllegalArgumentException.class);
+        .isInstanceOf(NullPointerException.class);
     assertThatThrownBy(() -> complete().url(null).build())
         .as("url")
-        .isInstanceOf(IllegalArgumentException.class);
+        .isInstanceOf(NullPointerException.class);
     assertThatThrownBy(() -> complete().file(" ").build())
         .as("file")
         .isInstanceOf(IllegalArgumentException.class);
     assertThatThrownBy(() -> complete().file(null).build())
         .as("no file")
-        .isInstanceOf(IllegalArgumentException.class);
+        .isInstanceOf(NullPointerException.class);
   }
 }

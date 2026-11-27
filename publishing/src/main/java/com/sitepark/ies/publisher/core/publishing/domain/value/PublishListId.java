@@ -1,5 +1,7 @@
 package com.sitepark.ies.publisher.core.publishing.domain.value;
 
+import java.util.Objects;
+
 /**
  * Identifies a list of publish tasks. Unique on a server, also across its restarts, and sortable
  * by the time the list was requested.
@@ -11,10 +13,12 @@ public record PublishListId(String value) {
   /**
    * Validates that the id is present.
    *
-   * @throws IllegalArgumentException if {@code value} is {@code null} or blank
+   * @throws NullPointerException if {@code value} is {@code null}
+   * @throws IllegalArgumentException if {@code value} is blank
    */
   public PublishListId {
-    if (value == null || value.isBlank()) {
+    Objects.requireNonNull(value, "Id must not be null or blank");
+    if (value.isBlank()) {
       throw new IllegalArgumentException("Id must not be null or blank");
     }
   }
