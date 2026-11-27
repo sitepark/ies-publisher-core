@@ -1,5 +1,6 @@
 package com.sitepark.ies.publisher.core.publishing.domain.entity;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
 import com.sitepark.ies.sharedkernel.domain.UrlMappingMode;
 import java.util.Locale;
@@ -23,6 +24,7 @@ import org.jspecify.annotations.Nullable;
  * @param locale the language the page should be requested in; {@code null} if the mapping is not
  *     language-specific
  */
+@JsonDeserialize(builder = PublishedUrlMapping.Builder.class)
 public record PublishedUrlMapping(
     @Nullable String id,
     String siteId,
