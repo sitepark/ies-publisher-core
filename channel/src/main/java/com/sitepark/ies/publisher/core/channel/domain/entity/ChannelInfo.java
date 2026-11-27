@@ -73,7 +73,7 @@ public record ChannelInfo(String id, String name, @Nullable String description) 
      * @param description the channel description, or {@code null} if none
      * @return this builder for chaining
      */
-    public Builder description(String description) {
+    public Builder description(@Nullable String description) {
       this.description = description;
       return this;
     }

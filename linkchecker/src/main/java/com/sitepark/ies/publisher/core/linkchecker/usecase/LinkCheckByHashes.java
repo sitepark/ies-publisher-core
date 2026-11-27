@@ -6,7 +6,6 @@ import com.sitepark.ies.publisher.core.linkchecker.domain.entity.LinkCheckerResu
 import com.sitepark.ies.publisher.core.linkchecker.domain.entity.StatusType;
 import com.sitepark.ies.publisher.core.linkchecker.domain.exception.AccessDeniedException;
 import com.sitepark.ies.publisher.core.linkchecker.domain.exception.LinkCheckerDisabledException;
-import com.sitepark.ies.publisher.core.linkchecker.domain.exception.LinkCheckerException;
 import com.sitepark.ies.publisher.core.linkchecker.port.AccessControl;
 import com.sitepark.ies.publisher.core.linkchecker.port.LinkChecker;
 import com.sitepark.ies.publisher.core.linkchecker.port.LinkCheckerConfigStore;
@@ -15,12 +14,11 @@ import com.sitepark.ies.publisher.core.linkchecker.service.LinkCheckerExcludesPa
 import jakarta.inject.Inject;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Use case that synchronously checks a selected set of links identified by their hashes and returns
@@ -56,8 +54,12 @@ public class LinkCheckByHashes {
   /**
    * Check the links whose hashes have been specified.
    *
+   * <p>Links excluded by the configuration are marked as ignored but not returned. A link whose
+   * check fails with an error is returned with the status {@link StatusType#OTHER} and the error
+   * message, so the results of the other links are not lost.
+   *
    * @param hashes the hashes identifying the links to check
-   * @return the check results for the checked links
+   * @return the check results for the checked links, in the order of the links
    */
   public List<LinkCheckerResultItem> linkCheckByHashes(Collection<String> hashes) {
 
@@ -70,21 +72,21 @@ public class LinkCheckByHashes {
 
     List<LinkCheckerLink> linksToCheck = this.publishedExternalLinkRepository.getLinks(hashes);
 
+    // closing the executor waits for the submitted tasks
     try (ExecutorService executorService = Executors.newFixedThreadPool(config.getParallel())) {
 
-      List<LinkCheckerResultItem> resultList = Collections.synchronizedList(new ArrayList<>());
-      List<CompletableFuture<Void>> futures = new ArrayList<>();
-
+      List<CompletableFuture<Optional<LinkCheckerResultItem>>> futures = new ArrayList<>();
       for (LinkCheckerLink link : linksToCheck) {
-        CompletableFuture<Void> future =
-            createLinkCheckTask(
-                link, linkCheckerExcludesPatternMatcher, config, resultList, executorService);
-        futures.add(future);
+        futures.add(
+            CompletableFuture.supplyAsync(
+                () -> this.check(link, linkCheckerExcludesPatternMatcher, config),
+                executorService));
       }
 
-      CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
-      shutdownExecutorService(executorService);
-
+      List<LinkCheckerResultItem> resultList = new ArrayList<>();
+      for (CompletableFuture<Optional<LinkCheckerResultItem>> future : futures) {
+        future.join().ifPresent(resultList::add);
+      }
       return resultList;
     }
   }
@@ -103,36 +105,32 @@ public class LinkCheckByHashes {
     return config;
   }
 
-  private CompletableFuture<Void> createLinkCheckTask(
+  // one failing link must not take down the results of the others
+  @SuppressWarnings("PMD.AvoidCatchingGenericException")
+  private Optional<LinkCheckerResultItem> check(
       LinkCheckerLink link,
       LinkCheckerExcludesPatternMatcher linkCheckerExcludesPatternMatcher,
-      LinkCheckerConfig config,
-      List<LinkCheckerResultItem> resultList,
-      ExecutorService executorService) {
-    return CompletableFuture.runAsync(
-        () -> {
-          if (linkCheckerExcludesPatternMatcher.isExcluded(link.getUrl())) {
-            this.publishedExternalLinkRepository.updateCheckResult(
-                link.getHash(), LinkCheckerResultItem.builder().status(StatusType.IGNORED).build());
-            return;
-          }
-          LinkCheckerLink linkWithTimeout = link.toBuilder().timeout(config.getTimeout()).build();
-          LinkCheckerResultItem result = this.linkChecker.checkLink(linkWithTimeout);
-          this.publishedExternalLinkRepository.updateCheckResult(linkWithTimeout.getHash(), result);
-          resultList.add(
-              result.toBuilder().url(link.getUrl()).hash(linkWithTimeout.getHash()).build());
-        },
-        executorService);
-  }
-
-  private void shutdownExecutorService(ExecutorService executorService) {
-    executorService.shutdown();
-    try {
-      if (!executorService.awaitTermination(1, TimeUnit.MINUTES)) {
-        throw new LinkCheckerException("Executor did not terminate in the specified time.");
-      }
-    } catch (InterruptedException e) {
-      throw new LinkCheckerException("Executor awaitTermination interrupted.", e);
+      LinkCheckerConfig config) {
+    if (linkCheckerExcludesPatternMatcher.isExcluded(link.getUrl())) {
+      this.publishedExternalLinkRepository.updateCheckResult(
+          link.getHash(), LinkCheckerResultItem.builder().status(StatusType.IGNORED).build());
+      return Optional.empty();
     }
+    LinkCheckerLink linkWithTimeout = link.toBuilder().timeout(config.getTimeout()).build();
+    LinkCheckerResultItem result;
+    try {
+      result = this.linkChecker.checkLink(linkWithTimeout);
+    } catch (RuntimeException e) {
+      // a failed check is not stored: the link stays unchecked
+      return Optional.of(
+          LinkCheckerResultItem.builder()
+              .url(link.getUrl())
+              .hash(link.getHash())
+              .status(StatusType.OTHER)
+              .message(String.valueOf(e.getMessage()))
+              .build());
+    }
+    this.publishedExternalLinkRepository.updateCheckResult(linkWithTimeout.getHash(), result);
+    return Optional.of(result.toBuilder().url(link.getUrl()).hash(link.getHash()).build());
   }
 }

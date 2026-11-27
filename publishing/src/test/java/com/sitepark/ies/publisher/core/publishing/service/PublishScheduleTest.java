@@ -422,6 +422,54 @@ class PublishScheduleTest {
   }
 
   @Test
+  void foregroundPublishingLeavesAWaitingRevokeAlone() {
+    this.open(PublishPriority.URGENT, revoke("a"));
+
+    this.schedule.enterForeground(publish("a"));
+
+    assertThat(this.schedule.isWaiting(key("a"), PublishTaskType.DEPUBLISH))
+        .as("publishing in the foreground does not serve a request to revoke the entity")
+        .isTrue();
+  }
+
+  @Test
+  void foregroundLeavesAWaitingTaskAskingForMoreAlone() {
+    this.open(PublishPriority.URGENT, publish("a").withOptions(new PublishTaskOptions(true, true)));
+
+    this.schedule.enterForeground(publish("a"));
+
+    assertThat(this.schedule.status().waiting())
+        .as("the waiting task forces scaled images, the foreground task does not")
+        .isEqualTo(1);
+  }
+
+  @Test
+  void foregroundTakesOverAWaitingTaskAskingForLess() {
+    this.urgent("a");
+
+    this.schedule.enterForeground(publish("a").withOptions(new PublishTaskOptions(true, true)));
+
+    assertThat(this.schedule.status().waiting())
+        .as("the foreground task does everything the waiting task asked for")
+        .isZero();
+  }
+
+  @Test
+  void aListComingAfterAListWithACleanupDoesNotWaitForTheCleanup() {
+    PublishListId first = this.open(PublishPriority.URGENT, publish("x"), cleanup("y"));
+    this.after(first, "a", "b");
+    PublishTask x = this.schedule.pollNext(FOUR).orElseThrow();
+    this.schedule.completed(x, PublishOutcome.DONE);
+
+    String one = this.next(FOUR);
+    String two = this.next(FOUR);
+
+    assertThat(List.of(one, two))
+        .as("the cleanup runs last, so the list after it must not wait for it, and runs parallel")
+        .containsExactlyInAnyOrder("a", "b");
+  }
+
+  @Test
   void aThreadInTheForegroundIsPublishing() {
     this.schedule.enterForeground(publish("a"));
 
@@ -536,6 +584,29 @@ class PublishScheduleTest {
     Thread.sleep(60);
 
     assertThat(this.schedule.lists()).as("the list is too old").isEmpty();
+  }
+
+  @Test
+  void doesNotFindAListThatIsOverForLongerThanTheLifetime() throws InterruptedException {
+    this.schedule = new PublishSchedule(new Retention(20, Duration.ofMillis(20)));
+    PublishListId id = this.urgent();
+    Thread.sleep(60);
+
+    assertThat(this.schedule.list(id)).as("an expired list is not looked up any more").isEmpty();
+    assertThatThrownBy(() -> this.schedule.await(id))
+        .as("and is unknown to whoever waits for it")
+        .isInstanceOf(IllegalArgumentException.class);
+  }
+
+  @Test
+  void idsOfListsStaySortableByTheTimeTheyWereRequested() {
+    PublishListId first = this.urgent();
+    PublishListId second = this.urgent();
+
+    assertThat(first.value())
+        .as("fixed width, so text order is request order")
+        .matches("\\d{8}-\\d{9}-\\d{12}");
+    assertThat(first.value()).as("the list requested first sorts first").isLessThan(second.value());
   }
 
   @Test

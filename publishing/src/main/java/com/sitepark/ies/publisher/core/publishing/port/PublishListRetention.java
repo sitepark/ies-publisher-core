@@ -1,5 +1,6 @@
 package com.sitepark.ies.publisher.core.publishing.port;
 
+import com.sitepark.ies.publisher.core.publishing.domain.value.PublishListRetentionSetting;
 import java.time.Duration;
 
 /**
@@ -14,12 +15,12 @@ public interface PublishListRetention {
       new PublishListRetention() {
         @Override
         public int keptLists() {
-          return 20;
+          return PublishListRetentionSetting.DEFAULT.keptLists();
         }
 
         @Override
         public Duration lifetime() {
-          return Duration.ofHours(24);
+          return PublishListRetentionSetting.DEFAULT.lifetime();
         }
       };
 

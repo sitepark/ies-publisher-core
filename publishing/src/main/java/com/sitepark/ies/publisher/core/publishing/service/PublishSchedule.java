@@ -19,6 +19,7 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.Deque;
 import java.util.HashMap;
@@ -27,6 +28,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableSet;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
@@ -60,8 +62,10 @@ import org.jspecify.annotations.Nullable;
  *   <li>A cleanup runs alone, once no other task is waiting and nothing is being published. No
  *       background task starts while it runs.
  *   <li>While a publication runs in the foreground, fewer background tasks are started.
- *   <li>A foreground publication takes over a waiting task of its entity, unless that task waits
- *       for another list, which the foreground cannot know to be done.
+ *   <li>A foreground publication takes over a waiting task of its entity if that does the same
+ *       work and asks for no more, options and attachment included. A task that asks for more, or
+ *       for something else - revoking instead of publishing - stays and runs afterwards, as does
+ *       one that waits for another list, which the foreground cannot know to be done.
  *   <li>Cancelling a list drops its waiting tasks, unless another list wants them too. What is
  *       being published is finished.
  * </ul>
@@ -76,6 +80,7 @@ import org.jspecify.annotations.Nullable;
 @Singleton
 // The maps are guarded by the lock; entries, holds and lists are private state of this class.
 @SuppressWarnings({
+  "PMD.GodClass",
   "PMD.TooManyMethods",
   "PMD.CyclomaticComplexity",
   "PMD.CouplingBetweenObjects",
@@ -95,7 +100,7 @@ public class PublishSchedule {
   private static final int OUTERMOST = 1;
 
   private static final DateTimeFormatter ID_TIME =
-      DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss").withZone(ZoneOffset.UTC);
+      DateTimeFormatter.ofPattern("yyyyMMdd-HHmmssSSS").withZone(ZoneOffset.UTC);
 
   private static final Comparator<Entry> BY_SEQUENCE = Comparator.comparingLong(e -> e.sequence);
 
@@ -467,8 +472,9 @@ public class PublishSchedule {
 
   /**
    * Waits until the entity of the task may be published in the foreground and marks it as being
-   * published. A task waiting for the same work is taken over, with the lists that want it, since
-   * the foreground does it now; a task that waits for another list stays. Has to be paired with
+   * published. A task waiting for the same work - the same type, asking for no more than the
+   * foreground task does - is taken over, with the lists that want it, since the foreground does
+   * it now; any other task stays, and so does one that waits for another list. Has to be paired with
    * {@link #leaveForeground}.
    *
    * @param task what the foreground is about to do
@@ -496,7 +502,9 @@ public class PublishSchedule {
       hold.add(list);
       this.holds.put(key, hold);
       Entry covered = this.waiting.get(SlotKey.of(task));
-      if (covered != null && task.type() != PublishTaskType.CLEANUP && !covered.hasToWait()) {
+      if (covered != null
+          && covers(task, covered.task)
+          && !covered.hasToWait(this.cleanupCounts())) {
         this.remove(covered);
         // whoever asked for the task is served by the foreground
         covered.lists.forEach(hold::add);
@@ -556,7 +564,11 @@ public class PublishSchedule {
     }
   }
 
-  /** Resumes publishing after {@link #suspend}. */
+  /**
+   * Resumes publishing after {@link #suspend}. Meant to be called by the thread that suspended. A
+   * thread that did not suspend lifts the oldest suspension instead, so a suspension is not kept
+   * for good by a thread that is gone.
+   */
   public void resume() {
     this.lock.lock();
     try {
@@ -628,7 +640,7 @@ public class PublishSchedule {
   private ListState register(PublishListRequest request, boolean foreground) {
     this.listCounter++;
     PublishListId id =
-        new PublishListId(this.idPrefix + "-" + String.format("%06d", this.listCounter));
+        new PublishListId(this.idPrefix + "-" + String.format("%012d", this.listCounter));
     ListState list = new ListState(id, request, foreground);
     for (PublishListId predecessor : request.after()) {
       ListState known = this.openLists.get(predecessor);
@@ -642,6 +654,7 @@ public class PublishSchedule {
   }
 
   private @Nullable ListState find(PublishListId id) {
+    this.dropExpiredLists();
     ListState active = this.openLists.get(id);
     if (active != null) {
       return active;
@@ -772,6 +785,19 @@ public class PublishSchedule {
     entry.priority = entry.mostUrgent();
   }
 
+  /**
+   * Whether the foreground doing a task serves a waiting task as well: it does the same work, with
+   * everything the waiting task asked for. Otherwise the waiting task stays and runs afterwards -
+   * an extra run is harmless, a lost option or a revoked entity published again is not.
+   */
+  private static boolean covers(PublishTask foreground, PublishTask waiting) {
+    return foreground.type() != PublishTaskType.CLEANUP
+        && foreground.type() == waiting.type()
+        && foreground.options().merge(waiting.options()).equals(foreground.options())
+        && (waiting.attachment() == null
+            || Objects.equals(waiting.attachment(), foreground.attachment()));
+  }
+
   /** One task for two requests: the younger says what to do, neither loses what it asked for. */
   private static PublishTask merge(PublishTask older, PublishTask younger) {
     Object attachment = younger.attachment() != null ? younger.attachment() : older.attachment();
@@ -812,8 +838,9 @@ public class PublishSchedule {
     if (this.cleaningUp || this.runningBackground >= allowed) {
       return null;
     }
+    CleanupCounts counts = this.cleanupCounts();
     for (Entry entry : this.queue) {
-      if (this.isFree(entry) && !entry.hasToWait()) {
+      if (this.isFree(entry) && !entry.hasToWait(counts)) {
         return entry;
       }
     }
@@ -824,6 +851,11 @@ public class PublishSchedule {
       return this.cleanups.isEmpty() ? null : this.cleanups.first();
     }
     return this.oldestWaitingInACircle();
+  }
+
+  /** The waiting cleanups per list, counted when first asked for: mostly nobody asks. */
+  private CleanupCounts cleanupCounts() {
+    return new CleanupCounts(this.cleanups);
   }
 
   private boolean isFree(Entry entry) {
@@ -907,12 +939,16 @@ public class PublishSchedule {
       return most;
     }
 
-    /** Whether a list this task comes after still has other tasks waiting or running. */
-    private boolean hasToWait() {
+    /**
+     * Whether a list this task comes after still has other tasks waiting or running. Cleanups of
+     * the list do not count: they run last, once nothing else is waiting, so waiting for them
+     * would make this task wait for itself.
+     */
+    private boolean hasToWait(CleanupCounts cleanups) {
       this.after.removeIf(list -> list.finished != null);
       for (ListState predecessor : this.after) {
         int own = this.lists.contains(predecessor) ? 1 : 0;
-        if (predecessor.open - own > 0) {
+        if (predecessor.open - own > 0 && predecessor.open - own > cleanups.of(predecessor)) {
           return true;
         }
       }
@@ -921,6 +957,32 @@ public class PublishSchedule {
 
     private boolean waitsForForeground() {
       return this.after.stream().anyMatch(list -> list.foreground && list.finished == null);
+    }
+  }
+
+  /** How many waiting cleanups each list has, worked out once and only if needed. */
+  private static final class CleanupCounts {
+
+    private final Collection<Entry> cleanups;
+
+    private @Nullable Map<ListState, Integer> counts;
+
+    private CleanupCounts(Collection<Entry> cleanups) {
+      this.cleanups = cleanups;
+    }
+
+    private int of(ListState list) {
+      Map<ListState, Integer> known = this.counts;
+      if (known == null) {
+        known = new HashMap<>();
+        for (Entry cleanup : this.cleanups) {
+          for (ListState owner : cleanup.lists) {
+            known.merge(owner, 1, Integer::sum);
+          }
+        }
+        this.counts = known;
+      }
+      return known.getOrDefault(list, 0);
     }
   }
 

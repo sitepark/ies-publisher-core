@@ -26,7 +26,7 @@ import java.util.Optional;
  *
  * <p>Two mappings are considered identical – and therefore unchanged – when all content fields
  * ({@code siteId}, {@code channelId}, {@code path}, {@code ownerId}, {@code mode}, {@code
- * priority}) match. The {@code id} field is deliberately excluded from this comparison because
+ * priority}, {@code locale}) match. The {@code id} field is deliberately excluded from this comparison because
  * incoming mappings may arrive without a pre-assigned identifier.
  */
 public class StorePublishedUrlMappingUseCase {
@@ -64,8 +64,16 @@ public class StorePublishedUrlMappingUseCase {
             ownerUrlMappings.channelId(), ownerUrlMappings.ownerId());
     List<PublishedUrlMapping> incoming = ownerUrlMappings.mappings();
 
-    List<PublishedUrlMapping> toAdd =
-        incoming.stream().filter(n -> existing.stream().noneMatch(n::hasSameContent)).toList();
+    List<PublishedUrlMapping> toAdd = new ArrayList<>();
+    for (PublishedUrlMapping mapping : incoming) {
+      // a mapping asked for twice is stored once, and does not conflict with itself
+      boolean known =
+          existing.stream().anyMatch(mapping::hasSameContent)
+              || toAdd.stream().anyMatch(mapping::hasSameContent);
+      if (!known) {
+        toAdd.add(mapping);
+      }
+    }
 
     List<PublishedUrlMapping> removed =
         existing.stream().filter(e -> incoming.stream().noneMatch(e::hasSameContent)).toList();
