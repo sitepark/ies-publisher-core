@@ -2,7 +2,6 @@ package com.sitepark.ies.publisher.core.translation.domain.entity;
 
 import java.time.LocalDate;
 import java.util.Objects;
-import org.jspecify.annotations.Nullable;
 
 /**
  * Volume of texts that were translated into one target language in one period.
@@ -42,9 +41,10 @@ public record TranslatedStatisticEntry(
   }
 
   /** Builder for {@link TranslatedStatisticEntry}. */
+  @SuppressWarnings("NullAway.Init") // required fields are set after construction
   public static final class Builder {
-    private @Nullable LocalDate period;
-    private @Nullable String language;
+    private LocalDate period;
+    private String language;
     private long timeMillis;
     private long bytes;
 
@@ -99,7 +99,6 @@ public record TranslatedStatisticEntry(
      *
      * @return the entry
      */
-    @SuppressWarnings("NullAway")
     public TranslatedStatisticEntry build() {
       return new TranslatedStatisticEntry(period, language, timeMillis, bytes);
     }

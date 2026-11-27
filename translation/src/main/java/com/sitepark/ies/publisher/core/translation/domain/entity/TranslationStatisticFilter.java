@@ -2,7 +2,6 @@ package com.sitepark.ies.publisher.core.translation.domain.entity;
 
 import java.time.LocalDate;
 import java.util.Objects;
-import org.jspecify.annotations.Nullable;
 
 /**
  * Selects the periods of a translation statistic query.
@@ -42,9 +41,10 @@ public record TranslationStatisticFilter(
   }
 
   /** Builder for {@link TranslationStatisticFilter}. */
+  @SuppressWarnings("NullAway.Init") // required fields are set after construction
   public static final class Builder {
-    private @Nullable LocalDate from;
-    private @Nullable LocalDate to;
+    private LocalDate from;
+    private LocalDate to;
     private StatisticGranularity granularity = StatisticGranularity.MONTH;
 
     private Builder() {}
@@ -87,7 +87,6 @@ public record TranslationStatisticFilter(
      *
      * @return the filter
      */
-    @SuppressWarnings("NullAway")
     public TranslationStatisticFilter build() {
       return new TranslationStatisticFilter(from, to, granularity);
     }
