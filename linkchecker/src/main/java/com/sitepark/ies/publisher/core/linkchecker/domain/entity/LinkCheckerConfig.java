@@ -2,7 +2,6 @@ package com.sitepark.ies.publisher.core.linkchecker.domain.entity;
 
 import com.sitepark.ies.publisher.core.linkchecker.domain.exception.InvalidLinkCheckerConfigException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -30,7 +29,7 @@ public final class LinkCheckerConfig {
     this.parallel = builder.parallel;
     this.timeout = builder.timeout;
     this.scheduling = builder.scheduling;
-    this.excludes = builder.excludes;
+    this.excludes = List.copyOf(builder.excludes);
   }
 
   /**
@@ -75,7 +74,7 @@ public final class LinkCheckerConfig {
    * @return the exclude patterns
    */
   public List<LinkCheckerExcludePattern> getExcludes() {
-    return Collections.unmodifiableList(this.excludes);
+    return this.excludes;
   }
 
   /**
@@ -136,7 +135,7 @@ public final class LinkCheckerConfig {
 
     private boolean enabled;
 
-    private int parallel;
+    private int parallel = MIN_PARALLEL;
 
     private int timeout;
 
@@ -208,6 +207,9 @@ public final class LinkCheckerConfig {
      * @return this builder for chaining
      */
     public Builder timeout(int timeout) {
+      if (timeout < 0) {
+        throw new InvalidLinkCheckerConfigException("Timeout must not be negative");
+      }
       this.timeout = timeout;
       return this;
     }

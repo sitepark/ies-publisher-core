@@ -10,8 +10,8 @@ import java.util.List;
  * <p>A file is identified by its key, type, path and status; everything else about it can be updated
  * in place.
  *
- * @param channelId the channel; must not be {@code null}
- * @param entityId the entity; must not be {@code null}
+ * @param channelId the channel; must not be {@code null} or blank
+ * @param entityId the entity; must not be {@code null} or blank
  * @param inserts files to store
  * @param updates stored files to overwrite with these, identified as before
  * @param trashes stored files to move to {@link PublishedFileStatus#TRASHED}, as they are stored now

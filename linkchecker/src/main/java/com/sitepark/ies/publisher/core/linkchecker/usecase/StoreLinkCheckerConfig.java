@@ -6,6 +6,7 @@ import com.sitepark.ies.publisher.core.linkchecker.port.AccessControl;
 import com.sitepark.ies.publisher.core.linkchecker.port.LinkCheckerConfigStore;
 import com.sitepark.ies.publisher.core.linkchecker.port.LinkCheckerScheduler;
 import com.sitepark.ies.publisher.core.linkchecker.port.PublishedExternalLinkRepository;
+import com.sitepark.ies.publisher.core.linkchecker.service.LinkCheckerExcludesPatternMatcher;
 import jakarta.inject.Inject;
 
 /**
@@ -53,6 +54,9 @@ public class StoreLinkCheckerConfig {
     if (!this.accessControl.isAllowStoreLinkCheckerConfig()) {
       throw new AccessDeniedException("Not allowed to store link checker config");
     }
+
+    // reject invalid exclude patterns now instead of failing for every link checked later
+    new LinkCheckerExcludesPatternMatcher(config.getExcludes());
 
     LinkCheckerConfig oldConfig = this.linkCheckerConfigStore.get();
 

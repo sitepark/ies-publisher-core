@@ -2,7 +2,6 @@ package com.sitepark.ies.publisher.core.linkchecker.domain.entity;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -21,7 +20,7 @@ public final class LinkCheckerBackgroundExecution {
   private LinkCheckerBackgroundExecution(Builder builder) {
     this.parallel = builder.parallel;
     this.topic = builder.topic;
-    this.links = Collections.unmodifiableList(builder.links);
+    this.links = List.copyOf(builder.links);
     this.operation = builder.operation;
   }
 

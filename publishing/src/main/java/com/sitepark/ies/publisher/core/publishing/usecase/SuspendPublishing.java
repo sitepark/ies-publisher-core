@@ -1,6 +1,6 @@
 package com.sitepark.ies.publisher.core.publishing.usecase;
 
-import com.sitepark.ies.publisher.core.publishing.service.PublishSchedule;
+import com.sitepark.ies.publisher.core.publishing.domain.service.PublishSchedule;
 import jakarta.inject.Inject;
 
 /**
@@ -23,7 +23,8 @@ public class SuspendPublishing {
 
   /**
    * Waits until nothing is being published and lets nothing start, background or foreground, until
-   * {@link #resume()} is called by the same thread.
+   * {@link #resume()} is called, by the same thread. A call from another thread lifts the oldest
+   * suspension instead.
    */
   public void suspend() {
     this.schedule.suspend();

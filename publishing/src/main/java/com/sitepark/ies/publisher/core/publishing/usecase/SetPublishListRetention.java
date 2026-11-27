@@ -1,6 +1,7 @@
 package com.sitepark.ies.publisher.core.publishing.usecase;
 
 import com.sitepark.ies.publisher.core.publishing.domain.exception.AccessDeniedException;
+import com.sitepark.ies.publisher.core.publishing.domain.service.PublishSchedule;
 import com.sitepark.ies.publisher.core.publishing.domain.value.PublishListRetentionSetting;
 import com.sitepark.ies.publisher.core.publishing.port.AccessControl;
 import com.sitepark.ies.publisher.core.publishing.port.PublishListRetentionSettingStore;
@@ -13,21 +14,27 @@ public class SetPublishListRetention {
 
   private final PublishListRetentionSettingStore store;
 
+  private final PublishSchedule schedule;
+
   /**
    * Creates the use case.
    *
    * @param accessControl checks whether the current user may manage publishing
    * @param store keeps the setting
+   * @param schedule keeps the lists the setting applies to
    */
   @Inject
   public SetPublishListRetention(
-      AccessControl accessControl, PublishListRetentionSettingStore store) {
+      AccessControl accessControl,
+      PublishListRetentionSettingStore store,
+      PublishSchedule schedule) {
     this.accessControl = accessControl;
     this.store = store;
+    this.schedule = schedule;
   }
 
   /**
-   * Stores the setting.
+   * Stores the setting and applies it to the lists that are over.
    *
    * @param setting the setting
    * @throws AccessDeniedException if the current user may not manage publishing
@@ -37,5 +44,6 @@ public class SetPublishListRetention {
       throw new AccessDeniedException("Not allowed to set the retention of the publish lists");
     }
     this.store.store(setting);
+    this.schedule.retain(setting);
   }
 }

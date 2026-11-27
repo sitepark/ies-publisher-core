@@ -1,6 +1,7 @@
 package com.sitepark.ies.publisher.core.publishing.usecase;
 
 import com.sitepark.ies.publisher.core.publishing.domain.exception.AccessDeniedException;
+import com.sitepark.ies.publisher.core.publishing.domain.service.PublishSchedule;
 import com.sitepark.ies.publisher.core.publishing.domain.value.PublishListId;
 import com.sitepark.ies.publisher.core.publishing.port.AccessControl;
 import jakarta.inject.Inject;
@@ -13,18 +14,18 @@ public class StopPublishLists {
 
   private final AccessControl accessControl;
 
-  private final CancelPublishLists cancel;
+  private final PublishSchedule schedule;
 
   /**
    * Creates the use case.
    *
    * @param accessControl checks whether the current user may manage publishing
-   * @param cancel drops the tasks
+   * @param schedule what is published when
    */
   @Inject
-  public StopPublishLists(AccessControl accessControl, CancelPublishLists cancel) {
+  public StopPublishLists(AccessControl accessControl, PublishSchedule schedule) {
     this.accessControl = accessControl;
-    this.cancel = cancel;
+    this.schedule = schedule;
   }
 
   /**
@@ -36,7 +37,7 @@ public class StopPublishLists {
    */
   public boolean stop(PublishListId id) {
     this.checkAccess();
-    return this.cancel.cancel(id);
+    return this.schedule.cancel(id);
   }
 
   /**
@@ -47,7 +48,7 @@ public class StopPublishLists {
    */
   public int stopAll() {
     this.checkAccess();
-    return this.cancel.cancelAll();
+    return this.schedule.cancelAll();
   }
 
   private void checkAccess() {

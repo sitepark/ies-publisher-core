@@ -1,7 +1,6 @@
 package com.sitepark.ies.publisher.core.linkchecker.domain.entity;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -11,7 +10,7 @@ public final class LinkCheckerResultStatistic {
   private final List<StatusTypeCount> statusCounts;
 
   private LinkCheckerResultStatistic(Builder builder) {
-    this.statusCounts = Collections.unmodifiableList(builder.statusCounts);
+    this.statusCounts = List.copyOf(builder.statusCounts);
   }
 
   /**
