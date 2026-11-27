@@ -1,5 +1,7 @@
 package com.sitepark.ies.publisher.core.publishing.domain.value;
 
+import java.util.Objects;
+
 /**
  * Identifies what a publish task works on: an entity in a channel.
  *
@@ -14,14 +16,16 @@ public record PublishTaskKey(String channelId, String entityId) {
   /**
    * Validates that channel and entity are present.
    *
-   * @throws IllegalArgumentException if {@code channelId} or {@code entityId} is {@code null} or
-   *     blank
+   * @throws NullPointerException if {@code channelId} or {@code entityId} is {@code null}
+   * @throws IllegalArgumentException if {@code channelId} or {@code entityId} is blank
    */
   public PublishTaskKey {
-    if (channelId == null || channelId.isBlank()) {
+    Objects.requireNonNull(channelId, "Channel ID must not be null or blank");
+    if (channelId.isBlank()) {
       throw new IllegalArgumentException("Channel ID must not be null or blank");
     }
-    if (entityId == null || entityId.isBlank()) {
+    Objects.requireNonNull(entityId, "Entity ID must not be null or blank");
+    if (entityId.isBlank()) {
       throw new IllegalArgumentException("Entity ID must not be null or blank");
     }
   }

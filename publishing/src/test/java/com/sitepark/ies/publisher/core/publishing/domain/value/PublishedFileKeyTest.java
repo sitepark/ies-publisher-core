@@ -37,8 +37,8 @@ class PublishedFileKeyTest {
   @Test
   void nullChannelId_throwsException() {
     assertThatThrownBy(() -> new PublishedFileKey(null, "1118", null))
-        .as("null channelId should throw an IllegalArgumentException")
-        .isInstanceOf(IllegalArgumentException.class);
+        .as("null channelId should throw a NullPointerException")
+        .isInstanceOf(NullPointerException.class);
   }
 
   @Test
@@ -51,8 +51,8 @@ class PublishedFileKeyTest {
   @Test
   void nullEntityId_throwsException() {
     assertThatThrownBy(() -> new PublishedFileKey("55", null, null))
-        .as("null entityId should throw an IllegalArgumentException")
-        .isInstanceOf(IllegalArgumentException.class);
+        .as("null entityId should throw a NullPointerException")
+        .isInstanceOf(NullPointerException.class);
   }
 
   @Test

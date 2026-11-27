@@ -4,6 +4,7 @@ import com.sitepark.ies.publisher.core.publishing.domain.value.PublishedFileKey;
 import com.sitepark.ies.publisher.core.publishing.domain.value.PublishedFilePath;
 import com.sitepark.ies.publisher.core.publishing.domain.value.PublishedFileStatus;
 import com.sitepark.ies.publisher.core.publishing.domain.value.PublishedFileType;
+import java.util.Objects;
 import org.jspecify.annotations.Nullable;
 
 /**
@@ -55,23 +56,17 @@ public record PublishedFileEntry(
   /**
    * Validates that key, type, status, URL and file are present.
    *
-   * @throws IllegalArgumentException if {@code key}, {@code type}, {@code status} or {@code url} is
-   *     {@code null}, or {@code file} is {@code null} or blank
+   * @throws NullPointerException if {@code key}, {@code type}, {@code status}, {@code url} or {@code
+   *     file} is {@code null}
+   * @throws IllegalArgumentException if {@code file} is blank
    */
   public PublishedFileEntry {
-    if (key == null) {
-      throw new IllegalArgumentException("Key must not be null");
-    }
-    if (type == null) {
-      throw new IllegalArgumentException("Type must not be null");
-    }
-    if (status == null) {
-      throw new IllegalArgumentException("Status must not be null");
-    }
-    if (url == null) {
-      throw new IllegalArgumentException("URL must not be null");
-    }
-    if (file == null || file.isBlank()) {
+    Objects.requireNonNull(key, "Key must not be null");
+    Objects.requireNonNull(type, "Type must not be null");
+    Objects.requireNonNull(status, "Status must not be null");
+    Objects.requireNonNull(url, "URL must not be null");
+    Objects.requireNonNull(file, "File must not be null or blank");
+    if (file.isBlank()) {
       throw new IllegalArgumentException("File must not be null or blank");
     }
   }

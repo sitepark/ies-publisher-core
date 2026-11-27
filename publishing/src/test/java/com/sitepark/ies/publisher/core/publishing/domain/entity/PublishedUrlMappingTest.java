@@ -25,8 +25,8 @@ class PublishedUrlMappingTest {
   @Test
   void buildWithNullSiteId_throwsException() {
     assertThatThrownBy(() -> base().siteId(null).build())
-        .as("null siteId should throw an IllegalArgumentException")
-        .isInstanceOf(IllegalArgumentException.class);
+        .as("null siteId should throw a NullPointerException")
+        .isInstanceOf(NullPointerException.class);
   }
 
   @Test
@@ -39,8 +39,8 @@ class PublishedUrlMappingTest {
   @Test
   void buildWithNullChannelId_throwsException() {
     assertThatThrownBy(() -> base().channelId(null).build())
-        .as("null channelId should throw an IllegalArgumentException")
-        .isInstanceOf(IllegalArgumentException.class);
+        .as("null channelId should throw a NullPointerException")
+        .isInstanceOf(NullPointerException.class);
   }
 
   @Test
@@ -53,8 +53,8 @@ class PublishedUrlMappingTest {
   @Test
   void buildWithNullPath_throwsException() {
     assertThatThrownBy(() -> base().path(null).build())
-        .as("null path should throw an IllegalArgumentException")
-        .isInstanceOf(IllegalArgumentException.class);
+        .as("null path should throw a NullPointerException")
+        .isInstanceOf(NullPointerException.class);
   }
 
   @Test
@@ -67,8 +67,8 @@ class PublishedUrlMappingTest {
   @Test
   void buildWithNullOwnerId_throwsException() {
     assertThatThrownBy(() -> base().ownerId(null).build())
-        .as("null ownerId should throw an IllegalArgumentException")
-        .isInstanceOf(IllegalArgumentException.class);
+        .as("null ownerId should throw a NullPointerException")
+        .isInstanceOf(NullPointerException.class);
   }
 
   @Test
@@ -81,8 +81,8 @@ class PublishedUrlMappingTest {
   @Test
   void buildWithNullMode_throwsException() {
     assertThatThrownBy(() -> base().mode(null).build())
-        .as("null mode should throw an IllegalArgumentException")
-        .isInstanceOf(IllegalArgumentException.class);
+        .as("null mode should throw a NullPointerException")
+        .isInstanceOf(NullPointerException.class);
   }
 
   @Test

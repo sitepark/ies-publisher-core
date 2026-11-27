@@ -67,7 +67,7 @@ class PublishedObjectFilesChangesTest {
                 new PublishedObjectFilesChanges(
                     "55", null, List.of(), List.of(), List.of(), List.of(), List.of()))
         .as("entity")
-        .isInstanceOf(IllegalArgumentException.class);
+        .isInstanceOf(NullPointerException.class);
   }
 
   private static PublishedFileEntry anEntry() {
@@ -113,7 +113,7 @@ class PublishedObjectFilesChangesTest {
                 new PublishedObjectFilesChanges(
                     null, "4711", List.of(), List.of(), List.of(), List.of(), List.of()))
         .as("channel")
-        .isInstanceOf(IllegalArgumentException.class);
+        .isInstanceOf(NullPointerException.class);
     assertThatThrownBy(
             () ->
                 new PublishedObjectFilesChanges(
