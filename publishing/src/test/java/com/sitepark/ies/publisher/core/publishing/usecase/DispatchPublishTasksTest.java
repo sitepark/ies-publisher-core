@@ -9,6 +9,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.sitepark.ies.publisher.core.publishing.domain.entity.PublishTask;
+import com.sitepark.ies.publisher.core.publishing.domain.service.PublishSchedule;
 import com.sitepark.ies.publisher.core.publishing.domain.value.PublishListOrigin;
 import com.sitepark.ies.publisher.core.publishing.domain.value.PublishListRequest;
 import com.sitepark.ies.publisher.core.publishing.domain.value.PublishOutcome;
@@ -19,7 +20,6 @@ import com.sitepark.ies.publisher.core.publishing.port.PublishQueueListener;
 import com.sitepark.ies.publisher.core.publishing.port.PublishTaskExecutor;
 import com.sitepark.ies.publisher.core.publishing.port.PublishWorkers;
 import com.sitepark.ies.publisher.core.publishing.port.PublishingLimits;
-import com.sitepark.ies.publisher.core.publishing.service.PublishSchedule;
 import java.util.List;
 import java.util.concurrent.RejectedExecutionException;
 import org.junit.jupiter.api.BeforeEach;

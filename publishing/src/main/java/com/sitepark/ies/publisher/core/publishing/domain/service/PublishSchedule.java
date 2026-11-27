@@ -1,18 +1,19 @@
-package com.sitepark.ies.publisher.core.publishing.service;
+package com.sitepark.ies.publisher.core.publishing.domain.service;
 
 import com.sitepark.ies.publisher.core.publishing.domain.entity.PublishList;
 import com.sitepark.ies.publisher.core.publishing.domain.entity.PublishTask;
 import com.sitepark.ies.publisher.core.publishing.domain.value.PublishListId;
 import com.sitepark.ies.publisher.core.publishing.domain.value.PublishListRequest;
+import com.sitepark.ies.publisher.core.publishing.domain.value.PublishListRetentionSetting;
 import com.sitepark.ies.publisher.core.publishing.domain.value.PublishOutcome;
 import com.sitepark.ies.publisher.core.publishing.domain.value.PublishPriority;
 import com.sitepark.ies.publisher.core.publishing.domain.value.PublishQueueStatus;
 import com.sitepark.ies.publisher.core.publishing.domain.value.PublishTaskKey;
 import com.sitepark.ies.publisher.core.publishing.domain.value.PublishTaskType;
-import com.sitepark.ies.publisher.core.publishing.port.PublishListRetention;
-import com.sitepark.ies.publisher.core.publishing.port.PublishingLimits;
+import com.sitepark.ies.publisher.core.publishing.domain.value.PublishingCapacity;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -35,6 +36,7 @@ import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Supplier;
 import org.jspecify.annotations.Nullable;
 
 /**
@@ -93,7 +95,7 @@ public class PublishSchedule {
   /** How often a task is tried again after an attempt that failed for a passing reason. */
   private static final int MAX_RETRIES = 1;
 
-  /** How long a dispatcher waits at most before it looks at the limits again, in milliseconds. */
+  /** How long a dispatcher waits at most before it asks for the capacity again, in milliseconds. */
   private static final long RECHECK_MILLIS = 1000;
 
   /** The depth of a publication that is not nested in another one of the same entity. */
@@ -136,10 +138,13 @@ public class PublishSchedule {
   private final Deque<ListState> finishedLists = new ArrayDeque<>();
 
   /** How many of the lists that are over are kept, and for how long. */
-  private final PublishListRetention retention;
+  private PublishListRetentionSetting retention = PublishListRetentionSetting.DEFAULT;
+
+  /** Tells the time lists are requested, started and over, and when they expire. */
+  private final Clock clock;
 
   /** Makes the ids of lists unique across restarts: the time this schedule was created. */
-  private final String idPrefix = ID_TIME.format(Instant.now());
+  private final String idPrefix;
 
   private long listCounter;
 
@@ -159,22 +164,42 @@ public class PublishSchedule {
   /** Whether the dispatcher was told that everything is done, since the last request. */
   private boolean drainedAnnounced = true;
 
-  /** Creates a schedule that keeps the lists that are over as {@link PublishListRetention#DEFAULT}. */
+  /**
+   * Creates a schedule that keeps the lists that are over as {@link
+   * PublishListRetentionSetting#DEFAULT} until it is told otherwise by {@link #retain}.
+   */
+  @Inject
   public PublishSchedule() {
-    this(PublishListRetention.DEFAULT);
+    this(Clock.systemUTC());
   }
 
   /**
-   * Creates a schedule.
+   * Creates a schedule that tells the time by a clock of its own, for tests.
    *
-   * @param retention how many of the lists that are over are kept, and for how long
+   * @param clock the clock
    */
-  @Inject
-  public PublishSchedule(PublishListRetention retention) {
-    this.retention = retention;
+  PublishSchedule(Clock clock) {
+    this.clock = clock;
+    this.idPrefix = ID_TIME.format(clock.instant());
   }
 
   // --- lists
+
+  /**
+   * Sets how many of the lists that are over are kept, and for how long. Applies at once: lists
+   * beyond the new setting are forgotten.
+   *
+   * @param retention the setting
+   */
+  public void retain(PublishListRetentionSetting retention) {
+    this.lock.lock();
+    try {
+      this.retention = retention;
+      this.dropExpiredLists();
+    } finally {
+      this.lock.unlock();
+    }
+  }
 
   /**
    * Requests a list of tasks, all at once: none of them is handed out before all are known.
@@ -354,16 +379,18 @@ public class PublishSchedule {
    * Waits for the next task that may run in the background and marks its entity as being
    * published. Whoever takes a task has to report its end with {@link #completed}.
    *
-   * @param limits how much may run at the same time
+   * @param capacity how much may run at the same time; asked again whenever the schedule looks for
+   *     a task, as it may change while waiting
    * @return the task, or empty once everything requested is done; told once per run of work
    * @throws InterruptedException if the thread is interrupted while waiting
    */
-  public Optional<PublishTask> awaitNext(PublishingLimits limits) throws InterruptedException {
+  public Optional<PublishTask> awaitNext(Supplier<PublishingCapacity> capacity)
+      throws InterruptedException {
     this.lock.lockInterruptibly();
     try {
       while (true) {
         if (this.suspenders.isEmpty()) {
-          Entry next = this.findRunnable(limits);
+          Entry next = this.findRunnable(capacity.get());
           if (next != null) {
             this.start(next);
             return Optional.of(next.task);
@@ -373,7 +400,7 @@ public class PublishSchedule {
             return Optional.empty();
           }
         }
-        // the limits may change without anybody telling
+        // the capacity may change without anybody telling
         this.changed.await(RECHECK_MILLIS, TimeUnit.MILLISECONDS);
       }
     } finally {
@@ -385,16 +412,16 @@ public class PublishSchedule {
    * Returns the next task that may run in the background right now, like {@link #awaitNext} but
    * without waiting.
    *
-   * @param limits how much may run at the same time
+   * @param capacity how much may run at the same time
    * @return the task, or empty if none may run now
    */
-  public Optional<PublishTask> pollNext(PublishingLimits limits) {
+  public Optional<PublishTask> pollNext(PublishingCapacity capacity) {
     this.lock.lock();
     try {
       if (!this.suspenders.isEmpty()) {
         return Optional.empty();
       }
-      Entry next = this.findRunnable(limits);
+      Entry next = this.findRunnable(capacity);
       if (next == null) {
         return Optional.empty();
       }
@@ -489,7 +516,7 @@ public class PublishSchedule {
       Hold own = this.holds.get(key);
       if (own != null && thread.equals(own.owner)) {
         own.depth++;
-        own.add(list);
+        own.add(list, this.clock.instant());
         return;
       }
       this.foregroundActive++;
@@ -499,7 +526,7 @@ public class PublishSchedule {
       }
       this.stopWaitingInForeground(key);
       Hold hold = Hold.ofForeground(thread, task);
-      hold.add(list);
+      hold.add(list, this.clock.instant());
       this.holds.put(key, hold);
       Entry covered = this.waiting.get(SlotKey.of(task));
       if (covered != null
@@ -507,7 +534,8 @@ public class PublishSchedule {
           && !covered.hasToWait(this.cleanupCounts())) {
         this.remove(covered);
         // whoever asked for the task is served by the foreground
-        covered.lists.forEach(hold::add);
+        Instant now = this.clock.instant();
+        covered.lists.forEach(coveredList -> hold.add(coveredList, now));
       }
     } finally {
       this.lock.unlock();
@@ -641,7 +669,7 @@ public class PublishSchedule {
     this.listCounter++;
     PublishListId id =
         new PublishListId(this.idPrefix + "-" + String.format("%012d", this.listCounter));
-    ListState list = new ListState(id, request, foreground);
+    ListState list = new ListState(id, request, foreground, this.clock.instant());
     for (PublishListId predecessor : request.after()) {
       ListState known = this.openLists.get(predecessor);
       // a list that is over, or was never known, is nothing to wait for
@@ -668,7 +696,7 @@ public class PublishSchedule {
   }
 
   private void finish(ListState list) {
-    list.finished = Instant.now();
+    list.finished = this.clock.instant();
     list.releaseTasks();
     this.openLists.remove(list.id);
     this.finishedLists.addFirst(list);
@@ -677,9 +705,9 @@ public class PublishSchedule {
 
   /** Forgets the lists over the number or the age to be kept; the oldest are last. */
   private void dropExpiredLists() {
-    int kept = Math.max(0, this.retention.keptLists());
+    int kept = this.retention.keptLists();
     Duration lifetime = this.retention.lifetime();
-    Instant oldest = Instant.now().minus(lifetime);
+    Instant oldest = this.clock.instant().minus(lifetime);
     while (!this.finishedLists.isEmpty()) {
       ListState last = this.finishedLists.getLast();
       Instant finished = last.finished;
@@ -830,11 +858,9 @@ public class PublishSchedule {
     this.waiting.remove(SlotKey.of(entry.task));
   }
 
-  private @Nullable Entry findRunnable(PublishingLimits limits) {
+  private @Nullable Entry findRunnable(PublishingCapacity capacity) {
     int allowed =
-        this.foregroundActive > 0
-            ? limits.parallelWhileInteractive()
-            : Math.max(1, limits.parallel());
+        this.foregroundActive > 0 ? capacity.parallelWhileInteractive() : capacity.parallel();
     if (this.cleaningUp || this.runningBackground >= allowed) {
       return null;
     }
@@ -880,7 +906,8 @@ public class PublishSchedule {
   private void start(Entry entry) {
     this.remove(entry);
     Hold hold = Hold.ofBackground(entry);
-    entry.lists.forEach(hold::add);
+    Instant now = this.clock.instant();
+    entry.lists.forEach(list -> hold.add(list, now));
     this.holds.put(entry.task.key(), hold);
     this.runningBackground++;
     if (entry.task.type() == PublishTaskType.CLEANUP) {
@@ -1016,11 +1043,11 @@ public class PublishSchedule {
     }
 
     /** The list waits for this publication from now on. */
-    private void add(@Nullable ListState list) {
+    private void add(@Nullable ListState list, Instant now) {
       if (list != null && this.lists.add(list)) {
         list.running++;
         if (list.started == null) {
-          list.started = Instant.now();
+          list.started = now;
         }
       }
     }
@@ -1042,7 +1069,7 @@ public class PublishSchedule {
     /** The lists whose tasks have to be done first, as far as they were still going on. */
     private final Set<ListState> after = new HashSet<>();
 
-    private final Instant created = Instant.now();
+    private final Instant created;
 
     /** When the first task of the list started, or {@code null} while none has. */
     private @Nullable Instant started;
@@ -1062,8 +1089,10 @@ public class PublishSchedule {
 
     private final List<PublishTask> failed = new ArrayList<>();
 
-    private ListState(PublishListId id, PublishListRequest request, boolean foreground) {
+    private ListState(
+        PublishListId id, PublishListRequest request, boolean foreground, Instant created) {
       this.id = id;
+      this.created = created;
       this.request = request;
       this.priority = request.priority();
       this.foreground = foreground;

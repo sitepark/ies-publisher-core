@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.sitepark.ies.publisher.core.publishing.domain.entity.PublishTask;
 import com.sitepark.ies.publisher.core.publishing.domain.exception.AccessDeniedException;
+import com.sitepark.ies.publisher.core.publishing.domain.service.PublishSchedule;
 import com.sitepark.ies.publisher.core.publishing.domain.value.PublishListId;
 import com.sitepark.ies.publisher.core.publishing.domain.value.PublishListOrigin;
 import com.sitepark.ies.publisher.core.publishing.domain.value.PublishListRequest;
@@ -12,9 +13,9 @@ import com.sitepark.ies.publisher.core.publishing.domain.value.PublishListRetent
 import com.sitepark.ies.publisher.core.publishing.domain.value.PublishPriority;
 import com.sitepark.ies.publisher.core.publishing.domain.value.PublishTaskKey;
 import com.sitepark.ies.publisher.core.publishing.domain.value.PublishTaskType;
+import com.sitepark.ies.publisher.core.publishing.domain.value.PublishingCapacity;
 import com.sitepark.ies.publisher.core.publishing.port.AccessControl;
 import com.sitepark.ies.publisher.core.publishing.port.PublishListRetentionSettingStore;
-import com.sitepark.ies.publisher.core.publishing.service.PublishSchedule;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
@@ -29,7 +30,8 @@ class PublishListManagementTest {
   void storesAndReadsTheRetention() {
     Store store = new Store();
 
-    new SetPublishListRetention(ALLOWED, store).set(new PublishListRetentionSetting(5, 2));
+    new SetPublishListRetention(ALLOWED, store, new PublishSchedule())
+        .set(new PublishListRetentionSetting(5, 2));
 
     assertThat(new GetPublishListRetention(ALLOWED, store).get())
         .as("what was set is what is read")
@@ -37,10 +39,44 @@ class PublishListManagementTest {
   }
 
   @Test
+  void aRetentionSetAppliesToTheScheduleAtOnce() {
+    PublishSchedule schedule = new PublishSchedule();
+    EnqueuePublishTasks enqueue = new EnqueuePublishTasks(schedule);
+    enqueue.enqueue(empty());
+    PublishListId second = enqueue.enqueue(empty());
+
+    new SetPublishListRetention(ALLOWED, new Store(), schedule)
+        .set(new PublishListRetentionSetting(1, 2));
+
+    assertThat(schedule.lists())
+        .as("the lists beyond the new setting are forgotten")
+        .extracting(com.sitepark.ies.publisher.core.publishing.domain.entity.PublishList::id)
+        .containsExactly(second);
+  }
+
+  @Test
+  void initAppliesTheStoredRetention() {
+    Store store = new Store();
+    store.store(new PublishListRetentionSetting(1, 2));
+    PublishSchedule schedule = new PublishSchedule();
+    EnqueuePublishTasks enqueue = new EnqueuePublishTasks(schedule);
+    enqueue.enqueue(empty());
+    PublishListId second = enqueue.enqueue(empty());
+
+    new InitPublishSchedule(store, schedule).init();
+
+    assertThat(schedule.lists())
+        .as("the schedule keeps as many lists as stored, not as the default")
+        .extracting(com.sitepark.ies.publisher.core.publishing.domain.entity.PublishList::id)
+        .containsExactly(second);
+  }
+
+  @Test
   void refusesTheRetentionToAUserWithoutAccess() {
     Store store = new Store();
+    PublishSchedule schedule = new PublishSchedule();
 
-    assertThatThrownBy(() -> new SetPublishListRetention(DENIED, store).set(store.get()))
+    assertThatThrownBy(() -> new SetPublishListRetention(DENIED, store, schedule).set(store.get()))
         .as("setting needs the right to manage publishing")
         .isInstanceOf(AccessDeniedException.class);
     assertThatThrownBy(() -> new GetPublishListRetention(DENIED, store).get())
@@ -97,7 +133,7 @@ class PublishListManagementTest {
         .as("no task has started, so there is no time yet")
         .isNull();
 
-    PublishTask task = schedule.pollNext(new Limits()).orElseThrow();
+    PublishTask task = schedule.pollNext(new PublishingCapacity(1, 1)).orElseThrow();
     Thread.sleep(20);
     schedule.completed(
         task, com.sitepark.ies.publisher.core.publishing.domain.value.PublishOutcome.DONE);
@@ -105,6 +141,11 @@ class PublishListManagementTest {
     assertThat(schedule.list(id).orElseThrow().duration())
         .as("the time from the start of the first task to the end of the last")
         .isGreaterThanOrEqualTo(java.time.Duration.ofMillis(15));
+  }
+
+  private static PublishListRequest empty() {
+    return PublishListRequest.of(
+        "empty", PublishListOrigin.ADMINISTRATION, PublishPriority.NORMAL, List.of());
   }
 
   private static PublishListRequest list(String entity) {
@@ -127,20 +168,6 @@ class PublishListManagementTest {
     @Override
     public void store(PublishListRetentionSetting value) {
       this.setting = value;
-    }
-  }
-
-  private static final class Limits
-      implements com.sitepark.ies.publisher.core.publishing.port.PublishingLimits {
-
-    @Override
-    public int parallel() {
-      return 1;
-    }
-
-    @Override
-    public int parallelWhileInteractive() {
-      return 1;
     }
   }
 }

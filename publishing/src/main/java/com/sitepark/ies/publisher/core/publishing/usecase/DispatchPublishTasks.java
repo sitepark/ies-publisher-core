@@ -1,12 +1,13 @@
 package com.sitepark.ies.publisher.core.publishing.usecase;
 
 import com.sitepark.ies.publisher.core.publishing.domain.entity.PublishTask;
+import com.sitepark.ies.publisher.core.publishing.domain.service.PublishSchedule;
 import com.sitepark.ies.publisher.core.publishing.domain.value.PublishOutcome;
+import com.sitepark.ies.publisher.core.publishing.domain.value.PublishingCapacity;
 import com.sitepark.ies.publisher.core.publishing.port.PublishQueueListener;
 import com.sitepark.ies.publisher.core.publishing.port.PublishTaskExecutor;
 import com.sitepark.ies.publisher.core.publishing.port.PublishWorkers;
 import com.sitepark.ies.publisher.core.publishing.port.PublishingLimits;
-import com.sitepark.ies.publisher.core.publishing.service.PublishSchedule;
 import jakarta.inject.Inject;
 import java.util.Optional;
 
@@ -58,7 +59,7 @@ public class DispatchPublishTasks {
   // whatever keeps the workers from taking a task, its entity has to be freed
   @SuppressWarnings("PMD.AvoidCatchingGenericException")
   public void dispatchNext() throws InterruptedException {
-    Optional<PublishTask> next = this.schedule.awaitNext(this.limits);
+    Optional<PublishTask> next = this.schedule.awaitNext(this::capacity);
     if (next.isEmpty()) {
       this.listener.drained();
       return;
@@ -71,6 +72,10 @@ public class DispatchPublishTasks {
       this.schedule.completed(task, PublishOutcome.FAILED);
       this.listener.failed(task, e);
     }
+  }
+
+  private PublishingCapacity capacity() {
+    return new PublishingCapacity(this.limits.parallel(), this.limits.parallelWhileInteractive());
   }
 
   // whatever breaks a task, its entity has to be freed and the worker has to survive

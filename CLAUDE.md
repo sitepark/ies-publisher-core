@@ -53,9 +53,12 @@ Each module follows the same internal layer structure:
 - `domain/exception/` — business rule violations
 - `usecase/` — one class per use case, injected via `@jakarta.inject.Inject`
 - `port/` — pure interfaces (Repository, Service, AccessControl)
-- `service/` — internal domain services (no external dependencies)
+- `domain/service/` — domain services: business logic that belongs to no single entity; depends on the domain and the JDK only, never on ports (`publishing`: `PublishSchedule`)
+- `service/` — internal helpers, not exported (`linkchecker`)
 
-Only `domain.entity`, `domain.value`, `port`, and `usecase` packages are exported via `module-info.java`.
+`domain.entity`, `domain.value`, `domain.exception`, `port`, and `usecase` (as far as a module has them) are exported via `module-info.java`. `domain.service` is exported where use cases take a domain service in their public constructor (`publishing`).
+
+`PublishSchedule` is a deliberately stateful domain service: it holds the lists and tasks in memory, and all publishing use cases share the one `@Singleton` instance through their constructor. It reads no ports — use cases read them and pass plain values (`PublishingCapacity`, `PublishListRetentionSetting` via `retain()`). Adapters call `InitPublishSchedule.init()` once at startup so the stored settings apply.
 
 ## Architecture Rules
 
