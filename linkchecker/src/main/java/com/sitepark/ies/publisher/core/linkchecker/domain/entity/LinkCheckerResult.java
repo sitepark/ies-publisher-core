@@ -22,7 +22,7 @@ public final class LinkCheckerResult {
    *
    * @param builder the builder holding the values to copy
    */
-  public LinkCheckerResult(Builder builder) {
+  private LinkCheckerResult(Builder builder) {
     this.items = List.copyOf(builder.items);
     this.total = builder.total;
     this.start = builder.start;
