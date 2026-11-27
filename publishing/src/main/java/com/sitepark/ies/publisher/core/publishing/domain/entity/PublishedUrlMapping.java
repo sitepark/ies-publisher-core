@@ -71,33 +71,6 @@ public record PublishedUrlMapping(
     return mode.isForward();
   }
 
-  @Override
-  public String toString() {
-    return "PublishedUrlMapping{"
-        + "id='"
-        + id
-        + '\''
-        + ", siteId='"
-        + siteId
-        + '\''
-        + ", channelId='"
-        + channelId
-        + '\''
-        + ", path='"
-        + path
-        + '\''
-        + ", ownerId='"
-        + ownerId
-        + '\''
-        + ", mode="
-        + mode
-        + ", priority="
-        + priority
-        + ", locale="
-        + locale
-        + '}';
-  }
-
   /**
    * Returns {@code true} if this mapping is content-identical to {@code other}, ignoring the
    * technical {@code id} field. Two mappings are considered identical when {@code siteId}, {@code
