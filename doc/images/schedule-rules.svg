@@ -1,0 +1,187 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="980" height="640" viewBox="0 0 980 640" role="img" aria-labelledby="schedule-rules-title">
+  <title id="schedule-rules-title">Six rules: one thread per entity, merging, waiting for a running entity, list order, cleanups alone, and the foreground first.</title>
+  <defs>
+    <marker id="schedule-rules-ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path class="head" d="M0,0 L10,5 L0,10 z"/></marker>
+    <marker id="schedule-rules-ahs" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path class="head-s" d="M0,0 L10,5 L0,10 z"/></marker>
+    <marker id="schedule-rules-ahf" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path class="head-f" d="M0,0 L10,5 L0,10 z"/></marker>
+    <filter id="sh" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000000" flood-opacity="0.08"/>
+    </filter>
+    <style>
+      svg { font-family: Inter, Roboto, 'Helvetica Neue', 'DejaVu Sans', Arial, sans-serif; }
+      text { fill: #212121; font-size: 13px; }
+      .bg { fill: #ffffff; }
+      .t { font-size: 15px; font-weight: 700; }
+      .n { font-weight: 700; }
+      .sub { fill: #757575; font-size: 12px; }
+      .label { fill: #757575; font-size: 11.5px; font-weight: 600; }
+      .eyebrow { fill: #757575; font-size: 10.5px; font-weight: 700; letter-spacing: 0.08em; }
+      .code { font-family: 'JetBrains Mono', 'Roboto Mono', 'DejaVu Sans Mono', monospace; font-size: 12px; }
+      .big { font-size: 16px; font-weight: 700; }
+      .on { fill: #1d1d1b; }
+      .fgtext { fill: #6f4bb8; }
+      .card { fill: #ffffff; stroke: #bdbdbd; stroke-width: 1.25; filter: url(#sh); }
+      .ac { fill: #fef4d6; stroke: #fbba00; stroke-width: 2; filter: url(#sh); }
+      .sk { fill: #fcf5e3; stroke: #e0a500; stroke-width: 1.5; filter: url(#sh); }
+      .pm { fill: #e6f4f2; stroke: #1f9d8b; stroke-width: 1.5; filter: url(#sh); }
+      .kp { fill: #eaf1fb; stroke: #3f7fd9; stroke-width: 1.5; filter: url(#sh); }
+      .fw { fill: #efefef; stroke: #6b6b69; stroke-width: 1.5; filter: url(#sh); }
+      .fg { fill: #f2eefa; stroke: #8a63d2; stroke-width: 1.5; filter: url(#sh); }
+      .err { fill: #fbebeb; stroke: #d64545; stroke-width: 1.5; filter: url(#sh); }
+      .thick { stroke-width: 2.25; }
+      .solid-ac { fill: #fbba00; }
+      .solid-sk { fill: #e0a500; }
+      .solid-pm { fill: #1f9d8b; }
+      .solid-kp { fill: #3f7fd9; }
+      .solid-fw { fill: #6b6b69; }
+      .solid-fg { fill: #8a63d2; }
+      .soft { fill: #f5f5f5; }
+      .ghost { fill: #f5f5f5; stroke: #bdbdbd; stroke-width: 1.25; stroke-dasharray: 4 3; }
+      .frame { fill: none; stroke: #bdbdbd; stroke-width: 1.5; stroke-dasharray: 6 5; }
+      .edge { fill: none; stroke: #757575; stroke-width: 1.75; }
+      .strong { stroke: #fbba00; stroke-width: 2.75; }
+      .dashed { stroke-dasharray: 6 4; }
+      .edge-fg { fill: none; stroke: #8a63d2; stroke-width: 1.75; stroke-dasharray: 6 4; }
+      .head { fill: #757575; }
+      .head-s { fill: #fbba00; }
+      .head-f { fill: #8a63d2; }
+      .icon { fill: none; stroke: #212121; stroke-width: 2.25; stroke-linecap: round; stroke-linejoin: round; }
+      .life { stroke: #bdbdbd; stroke-width: 1.5; stroke-dasharray: 4 4; }
+      .rule { stroke: #e0e0e0; stroke-width: 1; }
+    </style>
+  </defs>
+  <rect class="bg" width="980" height="640" rx="16"/>
+  <g transform="translate(20,20)">
+    <rect class="card" width="300" height="290" rx="14"/>
+    <circle class="solid-pm" cx="30" cy="32" r="15"/>
+    <text class="t on" x="30" y="37" text-anchor="middle">1</text>
+    <text class="eyebrow" x="54" y="26">RULE 1</text>
+    <text class="t" x="54" y="45">One entity, one thread</text>
+    <circle class="pm" cx="55" cy="114" r="18"/>
+    <text x="55" y="119" text-anchor="middle">T1</text>
+    <circle class="fw" cx="245" cy="114" r="18"/>
+    <text x="245" y="119" text-anchor="middle">T2</text>
+    <rect class="card" x="120" y="92" width="60" height="44" rx="8"/>
+    <text class="big code" x="150" y="120" text-anchor="middle">42</text>
+    <path class="edge strong" d="M73,114 H114" marker-end="url(#schedule-rules-ahs)"/>
+    <path class="edge dashed" d="M227,114 H186" marker-end="url(#schedule-rules-ah)"/>
+    <text class="label" x="95" y="100" text-anchor="middle">holds</text>
+    <text class="label" x="206" y="100" text-anchor="middle">waits</text>
+    <text class="sub" x="150" y="166" text-anchor="middle">entity 42 in one channel</text>
+    <text x="16" y="196">An entity is published in a channel</text>
+    <text x="16" y="213">by one thread at a time –</text>
+    <text x="16" y="230">background or foreground.</text>
+    <line class="rule" x1="16" y1="258" x2="284" y2="258"/>
+    <text class="code sub" x="16" y="278">EntityHolds.isFree()</text>
+  </g>
+  <g transform="translate(340,20)">
+    <rect class="card" width="300" height="290" rx="14"/>
+    <circle class="solid-sk" cx="30" cy="32" r="15"/>
+    <text class="t on" x="30" y="37" text-anchor="middle">2</text>
+    <text class="eyebrow" x="54" y="26">RULE 2</text>
+    <text class="t" x="54" y="45">Same entity? Merge.</text>
+    <rect class="sk" x="16" y="76" width="114" height="32" rx="16"/>
+    <text class="code" x="73" y="97" text-anchor="middle">42 · list A</text>
+    <rect class="sk" x="16" y="122" width="114" height="32" rx="16"/>
+    <text class="code" x="73" y="143" text-anchor="middle">42 · list B</text>
+    <path class="edge" d="M130,92 L166,109" marker-end="url(#schedule-rules-ah)"/>
+    <path class="edge" d="M130,138 L166,121" marker-end="url(#schedule-rules-ah)"/>
+    <rect class="ac" x="170" y="96" width="116" height="38" rx="19"/>
+    <text class="code n" x="228" y="120" text-anchor="middle">42 · A + B</text>
+    <text class="sub" x="150" y="176" text-anchor="middle">URGENT + BULK → URGENT</text>
+    <text x="16" y="196">A second request for a waiting</text>
+    <text x="16" y="213">entity joins the first one: it keeps</text>
+    <text x="16" y="230">its place and the higher priority.</text>
+    <line class="rule" x1="16" y1="258" x2="284" y2="258"/>
+    <text class="code sub" x="16" y="278">WaitingTasks.add()</text>
+  </g>
+  <g transform="translate(660,20)">
+    <rect class="card" width="300" height="290" rx="14"/>
+    <circle class="solid-ac" cx="30" cy="32" r="15"/>
+    <text class="t on" x="30" y="37" text-anchor="middle">3</text>
+    <text class="eyebrow" x="54" y="26">RULE 3</text>
+    <text class="t" x="54" y="45">Running? Wait for it.</text>
+    <rect class="pm" x="16" y="92" width="114" height="46" rx="10"/>
+    <text class="big code" x="73" y="112" text-anchor="middle">42</text>
+    <text class="sub" x="73" y="130" text-anchor="middle">running</text>
+    <path class="edge" d="M130,115 H166" marker-end="url(#schedule-rules-ah)"/>
+    <text class="label" x="149" y="105" text-anchor="middle">then</text>
+    <rect class="sk" x="170" y="92" width="114" height="46" rx="10"/>
+    <text class="big code" x="227" y="112" text-anchor="middle">42</text>
+    <text class="sub" x="227" y="130" text-anchor="middle">waiting</text>
+    <text class="sub" x="150" y="166" text-anchor="middle">a new request after a change</text>
+    <text x="16" y="196">A request for an entity being</text>
+    <text x="16" y="213">published waits and runs after it:</text>
+    <text x="16" y="230">the running task may have read</text>
+    <text x="16" y="247">the state before the change.</text>
+    <line class="rule" x1="16" y1="258" x2="284" y2="258"/>
+    <text class="code sub" x="16" y="278">Hold  ≠  WaitingTask</text>
+  </g>
+  <g transform="translate(20,330)">
+    <rect class="card" width="300" height="290" rx="14"/>
+    <circle class="solid-kp" cx="30" cy="32" r="15"/>
+    <text class="t on" x="30" y="37" text-anchor="middle">4</text>
+    <text class="eyebrow" x="54" y="26">RULE 4</text>
+    <text class="t" x="54" y="45">Lists keep their order</text>
+    <text class="n" x="20" y="96">List A</text>
+    <rect class="kp" x="80" y="78" width="24" height="24" rx="5"/>
+    <rect class="kp" x="112" y="78" width="24" height="24" rx="5"/>
+    <rect class="kp" x="144" y="78" width="24" height="24" rx="5"/>
+    <text class="n" x="20" y="146">List B</text>
+    <rect class="ghost" x="80" y="128" width="24" height="24" rx="5"/>
+    <rect class="ghost" x="112" y="128" width="24" height="24" rx="5"/>
+    <rect class="ghost" x="144" y="128" width="24" height="24" rx="5"/>
+    <path class="edge" d="M190,140 V98" marker-end="url(#schedule-rules-ah)"/>
+    <text class="label" x="200" y="116">B comes</text>
+    <text class="label" x="200" y="131">after A</text>
+    <text class="sub" x="150" y="176" text-anchor="middle">B waits until A has nothing left</text>
+    <text x="16" y="196">A list can come after other lists.</text>
+    <text x="16" y="213">Its tasks start once those lists</text>
+    <text x="16" y="230">have nothing else left to do.</text>
+    <line class="rule" x1="16" y1="258" x2="284" y2="258"/>
+    <text class="code sub" x="16" y="278">WaitingTask.hasToWait()</text>
+  </g>
+  <g transform="translate(340,330)">
+    <rect class="card" width="300" height="290" rx="14"/>
+    <circle class="solid-fw" cx="30" cy="32" r="15"/>
+    <text class="t on" x="30" y="37" text-anchor="middle">5</text>
+    <text class="eyebrow" x="54" y="26">RULE 5</text>
+    <text class="t" x="54" y="45">A cleanup runs alone</text>
+    <rect class="fw thick" x="24" y="90" width="110" height="50" rx="10"/>
+    <text class="code n" x="79" y="120" text-anchor="middle">CLEANUP</text>
+    <rect class="ghost" x="150" y="90" width="40" height="50" rx="8"/>
+    <rect class="ghost" x="198" y="90" width="40" height="50" rx="8"/>
+    <rect class="ghost" x="246" y="90" width="40" height="50" rx="8"/>
+    <text class="sub" x="150" y="166" text-anchor="middle">free worker slots stay empty</text>
+    <text x="16" y="196">A cleanup starts only when nothing</text>
+    <text x="16" y="213">else waits or runs. While it runs,</text>
+    <text x="16" y="230">no other background task starts.</text>
+    <line class="rule" x1="16" y1="258" x2="284" y2="258"/>
+    <text class="code sub" x="16" y="278">EntityHolds.mayStartBackground()</text>
+  </g>
+  <g transform="translate(660,330)">
+    <rect class="card" width="300" height="290" rx="14"/>
+    <circle class="solid-fg" cx="30" cy="32" r="15"/>
+    <text class="t on" x="30" y="37" text-anchor="middle">6</text>
+    <text class="eyebrow" x="54" y="26">RULE 6</text>
+    <text class="t" x="54" y="45">Foreground first</text>
+    <circle class="icon" cx="42" cy="88" r="10"/>
+    <path class="icon" d="M24,124 a18,16 0 0 1 36,0"/>
+    <text class="label" x="42" y="144" text-anchor="middle">editor</text>
+    <path class="edge-fg" d="M64,108 H98" style="stroke-dasharray:none" marker-end="url(#schedule-rules-ahf)"/>
+    <rect class="fg" x="102" y="90" width="48" height="36" rx="8"/>
+    <text class="big code" x="126" y="114" text-anchor="middle">42</text>
+    <text class="label" x="176" y="84">background</text>
+    <rect class="pm" x="176" y="96" width="20" height="20" rx="4"/>
+    <rect class="ghost" x="202" y="96" width="20" height="20" rx="4"/>
+    <rect class="ghost" x="228" y="96" width="20" height="20" rx="4"/>
+    <rect class="ghost" x="254" y="96" width="20" height="20" rx="4"/>
+    <text class="sub" x="225" y="136" text-anchor="middle">fewer in parallel</text>
+    <text class="sub" x="150" y="174" text-anchor="middle">… and it takes over an identical task</text>
+    <text x="16" y="196">While an editor publishes, fewer</text>
+    <text x="16" y="213">background tasks run, and the</text>
+    <text x="16" y="230">background keeps off its entity.</text>
+    <line class="rule" x1="16" y1="258" x2="284" y2="258"/>
+    <text class="code sub" x="16" y="278">WaitingTasks.takeOverBy()</text>
+  </g>
+</svg>

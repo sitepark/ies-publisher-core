@@ -1,0 +1,113 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="380" viewBox="0 0 960 380" role="img" aria-labelledby="merge-example-title">
+  <title id="merge-example-title">List A (urgent) asks for entities 7 and 42, list B (bulk) for 42 and 99. 42 waits once, keeps its place, belongs to both lists and is urgent.</title>
+  <defs>
+    <marker id="merge-example-ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path class="head" d="M0,0 L10,5 L0,10 z"/></marker>
+    <marker id="merge-example-ahs" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path class="head-s" d="M0,0 L10,5 L0,10 z"/></marker>
+    <marker id="merge-example-ahf" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path class="head-f" d="M0,0 L10,5 L0,10 z"/></marker>
+    <filter id="sh" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000000" flood-opacity="0.08"/>
+    </filter>
+    <style>
+      svg { font-family: Inter, Roboto, 'Helvetica Neue', 'DejaVu Sans', Arial, sans-serif; }
+      text { fill: #212121; font-size: 13px; }
+      .bg { fill: #ffffff; }
+      .t { font-size: 15px; font-weight: 700; }
+      .n { font-weight: 700; }
+      .sub { fill: #757575; font-size: 12px; }
+      .label { fill: #757575; font-size: 11.5px; font-weight: 600; }
+      .eyebrow { fill: #757575; font-size: 10.5px; font-weight: 700; letter-spacing: 0.08em; }
+      .code { font-family: 'JetBrains Mono', 'Roboto Mono', 'DejaVu Sans Mono', monospace; font-size: 12px; }
+      .big { font-size: 16px; font-weight: 700; }
+      .on { fill: #1d1d1b; }
+      .fgtext { fill: #6f4bb8; }
+      .card { fill: #ffffff; stroke: #bdbdbd; stroke-width: 1.25; filter: url(#sh); }
+      .ac { fill: #fef4d6; stroke: #fbba00; stroke-width: 2; filter: url(#sh); }
+      .sk { fill: #fcf5e3; stroke: #e0a500; stroke-width: 1.5; filter: url(#sh); }
+      .pm { fill: #e6f4f2; stroke: #1f9d8b; stroke-width: 1.5; filter: url(#sh); }
+      .kp { fill: #eaf1fb; stroke: #3f7fd9; stroke-width: 1.5; filter: url(#sh); }
+      .fw { fill: #efefef; stroke: #6b6b69; stroke-width: 1.5; filter: url(#sh); }
+      .fg { fill: #f2eefa; stroke: #8a63d2; stroke-width: 1.5; filter: url(#sh); }
+      .err { fill: #fbebeb; stroke: #d64545; stroke-width: 1.5; filter: url(#sh); }
+      .thick { stroke-width: 2.25; }
+      .solid-ac { fill: #fbba00; }
+      .solid-sk { fill: #e0a500; }
+      .solid-pm { fill: #1f9d8b; }
+      .solid-kp { fill: #3f7fd9; }
+      .solid-fw { fill: #6b6b69; }
+      .solid-fg { fill: #8a63d2; }
+      .soft { fill: #f5f5f5; }
+      .ghost { fill: #f5f5f5; stroke: #bdbdbd; stroke-width: 1.25; stroke-dasharray: 4 3; }
+      .frame { fill: none; stroke: #bdbdbd; stroke-width: 1.5; stroke-dasharray: 6 5; }
+      .edge { fill: none; stroke: #757575; stroke-width: 1.75; }
+      .strong { stroke: #fbba00; stroke-width: 2.75; }
+      .dashed { stroke-dasharray: 6 4; }
+      .edge-fg { fill: none; stroke: #8a63d2; stroke-width: 1.75; stroke-dasharray: 6 4; }
+      .head { fill: #757575; }
+      .head-s { fill: #fbba00; }
+      .head-f { fill: #8a63d2; }
+      .icon { fill: none; stroke: #212121; stroke-width: 2.25; stroke-linecap: round; stroke-linejoin: round; }
+      .life { stroke: #bdbdbd; stroke-width: 1.5; stroke-dasharray: 4 4; }
+      .rule { stroke: #e0e0e0; stroke-width: 1; }
+    </style>
+  </defs>
+  <rect class="bg" width="960" height="380" rx="16"/>
+  <rect class="card" x="20" y="25" width="260" height="115" rx="12"/>
+  <text class="eyebrow" x="36" y="48">LIST A</text>
+  <rect class="solid-ac" x="196" y="36" width="70" height="20" rx="10"/>
+  <text class="label on" x="231" y="50" text-anchor="middle">URGENT</text>
+  <text class="t" x="36" y="72">Page saved</text>
+  <rect class="kp" x="36" y="92" width="44" height="36" rx="8"/>
+  <text class="big code" x="58" y="116" text-anchor="middle">7</text>
+  <rect class="kp" x="90" y="92" width="44" height="36" rx="8"/>
+  <text class="big code" x="112" y="116" text-anchor="middle">42</text>
+
+  <rect class="card" x="20" y="160" width="260" height="115" rx="12"/>
+  <text class="eyebrow" x="36" y="183">LIST B</text>
+  <rect class="fw" x="196" y="171" width="70" height="20" rx="10" style="filter:none"/>
+  <text class="label" x="231" y="185" text-anchor="middle" style="fill:#212121">BULK</text>
+  <text class="t" x="36" y="207">Site republished</text>
+  <rect class="kp" x="36" y="227" width="44" height="36" rx="8"/>
+  <text class="big code" x="58" y="251" text-anchor="middle">42</text>
+  <rect class="kp" x="90" y="227" width="44" height="36" rx="8"/>
+  <text class="big code" x="112" y="251" text-anchor="middle">99</text>
+
+  <path class="edge" d="M290,150 H372" marker-end="url(#merge-example-ah)"/>
+  <text class="label code" x="331" y="138" text-anchor="middle">open(A)</text>
+  <text class="label code" x="331" y="172" text-anchor="middle">open(B)</text>
+
+  <rect class="sk" x="380" y="20" width="560" height="270" rx="14"/>
+  <text class="eyebrow" x="396" y="44">WAITINGTASKS · QUEUE ORDER</text>
+  <text class="sub" x="396" y="64">sorted by priority first, then by when the task was first requested</text>
+  <text class="label" x="410" y="92">#</text>
+  <text class="label" x="450" y="92">entity</text>
+  <text class="label" x="530" y="92">priority</text>
+  <text class="label" x="650" y="92">lists</text>
+  <text class="label" x="790" y="92">sequence</text>
+  <rect class="card" x="396" y="100" width="528" height="36" rx="8"/>
+  <text x="410" y="123">1</text>
+  <text class="big code" x="450" y="124">7</text>
+  <text class="code" x="530" y="123">URGENT</text>
+  <text class="code" x="650" y="123">A</text>
+  <text class="code" x="790" y="123">1</text>
+  <rect class="ac" x="396" y="144" width="528" height="36" rx="8"/>
+  <text x="410" y="167">2</text>
+  <text class="big code" x="450" y="168">42</text>
+  <text class="code" x="530" y="167">URGENT</text>
+  <text class="code" x="650" y="167">A + B</text>
+  <text class="code" x="790" y="167">2</text>
+  <text class="label" x="850" y="167">merged</text>
+  <rect class="card" x="396" y="188" width="528" height="36" rx="8"/>
+  <text x="410" y="211">3</text>
+  <text class="big code" x="450" y="212">99</text>
+  <text class="code" x="530" y="211">BULK</text>
+  <text class="code" x="650" y="211">B</text>
+  <text class="code" x="790" y="211">3</text>
+  <text class="sub" x="396" y="256">B's request for 42 joined the task of A: it keeps sequence 2</text>
+  <text class="sub" x="396" y="274">and stays URGENT, because the most urgent list decides.</text>
+
+  <rect class="soft" x="20" y="310" width="920" height="56" rx="12"/>
+  <text class="n" x="36" y="334">ListState counts</text>
+  <text class="code" x="200" y="334">A: total 2 · open 2</text>
+  <text class="code" x="420" y="334">B: total 2 · open 2</text>
+  <text x="36" y="355">When 42 is done, both lists count it as done: one publication, two lists served.</text>
+</svg>

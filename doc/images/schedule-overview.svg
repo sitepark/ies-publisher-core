@@ -1,0 +1,118 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="560" viewBox="0 0 960 560" role="img" aria-labelledby="schedule-overview-title">
+  <title id="schedule-overview-title">Six use cases call PublishSchedule. One lock guards its state, kept in WaitingTasks, EntityHolds and PublishLists. The schedule never publishes; workers and the executor do.</title>
+  <defs>
+    <marker id="schedule-overview-ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path class="head" d="M0,0 L10,5 L0,10 z"/></marker>
+    <marker id="schedule-overview-ahs" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path class="head-s" d="M0,0 L10,5 L0,10 z"/></marker>
+    <marker id="schedule-overview-ahf" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path class="head-f" d="M0,0 L10,5 L0,10 z"/></marker>
+    <filter id="sh" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000000" flood-opacity="0.08"/>
+    </filter>
+    <style>
+      svg { font-family: Inter, Roboto, 'Helvetica Neue', 'DejaVu Sans', Arial, sans-serif; }
+      text { fill: #212121; font-size: 13px; }
+      .bg { fill: #ffffff; }
+      .t { font-size: 15px; font-weight: 700; }
+      .n { font-weight: 700; }
+      .sub { fill: #757575; font-size: 12px; }
+      .label { fill: #757575; font-size: 11.5px; font-weight: 600; }
+      .eyebrow { fill: #757575; font-size: 10.5px; font-weight: 700; letter-spacing: 0.08em; }
+      .code { font-family: 'JetBrains Mono', 'Roboto Mono', 'DejaVu Sans Mono', monospace; font-size: 12px; }
+      .big { font-size: 16px; font-weight: 700; }
+      .on { fill: #1d1d1b; }
+      .fgtext { fill: #6f4bb8; }
+      .card { fill: #ffffff; stroke: #bdbdbd; stroke-width: 1.25; filter: url(#sh); }
+      .ac { fill: #fef4d6; stroke: #fbba00; stroke-width: 2; filter: url(#sh); }
+      .sk { fill: #fcf5e3; stroke: #e0a500; stroke-width: 1.5; filter: url(#sh); }
+      .pm { fill: #e6f4f2; stroke: #1f9d8b; stroke-width: 1.5; filter: url(#sh); }
+      .kp { fill: #eaf1fb; stroke: #3f7fd9; stroke-width: 1.5; filter: url(#sh); }
+      .fw { fill: #efefef; stroke: #6b6b69; stroke-width: 1.5; filter: url(#sh); }
+      .fg { fill: #f2eefa; stroke: #8a63d2; stroke-width: 1.5; filter: url(#sh); }
+      .err { fill: #fbebeb; stroke: #d64545; stroke-width: 1.5; filter: url(#sh); }
+      .thick { stroke-width: 2.25; }
+      .solid-ac { fill: #fbba00; }
+      .solid-sk { fill: #e0a500; }
+      .solid-pm { fill: #1f9d8b; }
+      .solid-kp { fill: #3f7fd9; }
+      .solid-fw { fill: #6b6b69; }
+      .solid-fg { fill: #8a63d2; }
+      .soft { fill: #f5f5f5; }
+      .ghost { fill: #f5f5f5; stroke: #bdbdbd; stroke-width: 1.25; stroke-dasharray: 4 3; }
+      .frame { fill: none; stroke: #bdbdbd; stroke-width: 1.5; stroke-dasharray: 6 5; }
+      .edge { fill: none; stroke: #757575; stroke-width: 1.75; }
+      .strong { stroke: #fbba00; stroke-width: 2.75; }
+      .dashed { stroke-dasharray: 6 4; }
+      .edge-fg { fill: none; stroke: #8a63d2; stroke-width: 1.75; stroke-dasharray: 6 4; }
+      .head { fill: #757575; }
+      .head-s { fill: #fbba00; }
+      .head-f { fill: #8a63d2; }
+      .icon { fill: none; stroke: #212121; stroke-width: 2.25; stroke-linecap: round; stroke-linejoin: round; }
+      .life { stroke: #bdbdbd; stroke-width: 1.5; stroke-dasharray: 4 4; }
+      .rule { stroke: #e0e0e0; stroke-width: 1; }
+    </style>
+  </defs>
+  <rect class="bg" width="960" height="560" rx="16"/>
+  <text class="eyebrow" x="20" y="30">USE CASES · THE CALLERS</text>
+  <rect class="card" x="20" y="45" width="250" height="56" rx="12"/>
+  <text class="n" x="34" y="68">EnqueuePublishTasks</text>
+  <text class="code sub" x="34" y="88">open(request)</text>
+  <path class="edge" d="M270,73 H326" marker-end="url(#schedule-overview-ah)"/>
+  <rect class="fg" x="20" y="113" width="250" height="56" rx="12"/>
+  <text class="n" x="34" y="136">PublishInForeground</text>
+  <text class="code sub" x="34" y="156">enter/leaveForeground()</text>
+  <path class="edge" d="M270,141 H326" marker-end="url(#schedule-overview-ah)"/>
+  <rect class="card" x="20" y="181" width="250" height="56" rx="12"/>
+  <text class="n" x="34" y="204">DispatchPublishTasks</text>
+  <text class="code sub" x="34" y="224">awaitNext · completed</text>
+  <path class="edge" d="M270,209 H326" marker-end="url(#schedule-overview-ah)"/>
+  <rect class="card" x="20" y="249" width="250" height="56" rx="12"/>
+  <text class="n" x="34" y="272">StopPublishLists</text>
+  <text class="code sub" x="34" y="292">cancel · cancelAll</text>
+  <path class="edge" d="M270,277 H326" marker-end="url(#schedule-overview-ah)"/>
+  <rect class="card" x="20" y="317" width="250" height="56" rx="12"/>
+  <text class="n" x="34" y="340">SuspendPublishing</text>
+  <text class="code sub" x="34" y="360">suspend · resume</text>
+  <path class="edge" d="M270,345 H326" marker-end="url(#schedule-overview-ah)"/>
+  <rect class="card" x="20" y="385" width="250" height="56" rx="12"/>
+  <text class="n" x="34" y="408">Get… use cases</text>
+  <text class="code sub" x="34" y="428">lists · list · status</text>
+  <path class="edge" d="M270,413 H326" marker-end="url(#schedule-overview-ah)"/>
+  <rect class="ac" x="330" y="20" width="610" height="440" rx="14"/>
+  <text class="eyebrow" x="350" y="44">DOMAIN SERVICE · @SINGLETON</text>
+  <text class="t" x="350" y="66">PublishSchedule</text>
+  <text class="sub" x="500" y="66">its public methods are the only way in</text>
+  <rect class="card" x="350" y="82" width="570" height="58" rx="10"/>
+  <path class="icon" d="M367,105 v-6 a7,7 0 0 1 14,0 v6"/>
+  <rect class="icon" x="362" y="105" width="24" height="18" rx="3"/>
+  <text class="n" x="400" y="106">One ReentrantLock guards all state</text>
+  <text class="sub" x="400" y="126">Threads wait on the Condition changed; every change calls signalAll().</text>
+  <rect class="card" x="350" y="152" width="570" height="58" rx="10"/>
+  <text class="n" x="366" y="176">The rules</text>
+  <text class="sub" x="366" y="196">findRunnable · start · settle · cancel – decide what may run, and when</text>
+  <rect class="sk" x="350" y="226" width="180" height="150" rx="12"/>
+  <text class="eyebrow" x="364" y="250">WAITS</text>
+  <text class="t" x="364" y="272">WaitingTasks</text>
+  <rect class="solid-sk" x="364" y="286" width="152" height="26" rx="13"/>
+  <text class="code on" x="440" y="304" text-anchor="middle">WaitingTask</text>
+  <text class="sub" x="364" y="336">one per entity, channel</text>
+  <text class="sub" x="364" y="354">and kind of work</text>
+  <rect class="pm" x="545" y="226" width="180" height="150" rx="12"/>
+  <text class="eyebrow" x="559" y="250">RUNS NOW</text>
+  <text class="t" x="559" y="272">EntityHolds</text>
+  <rect class="solid-pm" x="559" y="286" width="152" height="26" rx="13"/>
+  <text class="code on" x="635" y="304" text-anchor="middle">Hold</text>
+  <text class="sub" x="559" y="336">who publishes which</text>
+  <text class="sub" x="559" y="354">entity, how many run</text>
+  <rect class="kp" x="740" y="226" width="180" height="150" rx="12"/>
+  <text class="eyebrow" x="754" y="250">LISTS</text>
+  <text class="t" x="754" y="272">PublishLists</text>
+  <rect class="solid-kp" x="754" y="286" width="152" height="26" rx="13"/>
+  <text class="code on" x="830" y="304" text-anchor="middle">ListState</text>
+  <text class="sub" x="754" y="336">the counts of a list,</text>
+  <text class="sub" x="754" y="354">how long lists are kept</text>
+  <text class="sub" x="350" y="404">These classes are package-private and not thread-safe:</text>
+  <text class="sub" x="350" y="422">they are only touched by PublishSchedule while it holds the lock.</text>
+  <text class="code sub" x="350" y="446">publishing/…/domain/service/</text>
+  <rect class="soft" x="20" y="480" width="920" height="60" rx="12"/>
+  <text class="n" x="36" y="504">The schedule owns no thread and never publishes anything itself.</text>
+  <text class="sub" x="36" y="526">DispatchPublishTasks hands each task to the ports PublishWorkers → PublishTaskExecutor, which the adapters implement.</text>
+</svg>

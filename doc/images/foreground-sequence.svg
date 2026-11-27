@@ -1,0 +1,90 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="500" viewBox="0 0 960 500" role="img" aria-labelledby="foreground-sequence-title">
+  <title id="foreground-sequence-title">The editor's thread opens a foreground list, then for each task enters the foreground, publishes and leaves it, and finally closes the list.</title>
+  <defs>
+    <marker id="foreground-sequence-ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path class="head" d="M0,0 L10,5 L0,10 z"/></marker>
+    <marker id="foreground-sequence-ahs" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path class="head-s" d="M0,0 L10,5 L0,10 z"/></marker>
+    <marker id="foreground-sequence-ahf" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path class="head-f" d="M0,0 L10,5 L0,10 z"/></marker>
+    <filter id="sh" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000000" flood-opacity="0.08"/>
+    </filter>
+    <style>
+      svg { font-family: Inter, Roboto, 'Helvetica Neue', 'DejaVu Sans', Arial, sans-serif; }
+      text { fill: #212121; font-size: 13px; }
+      .bg { fill: #ffffff; }
+      .t { font-size: 15px; font-weight: 700; }
+      .n { font-weight: 700; }
+      .sub { fill: #757575; font-size: 12px; }
+      .label { fill: #757575; font-size: 11.5px; font-weight: 600; }
+      .eyebrow { fill: #757575; font-size: 10.5px; font-weight: 700; letter-spacing: 0.08em; }
+      .code { font-family: 'JetBrains Mono', 'Roboto Mono', 'DejaVu Sans Mono', monospace; font-size: 12px; }
+      .big { font-size: 16px; font-weight: 700; }
+      .on { fill: #1d1d1b; }
+      .fgtext { fill: #6f4bb8; }
+      .card { fill: #ffffff; stroke: #bdbdbd; stroke-width: 1.25; filter: url(#sh); }
+      .ac { fill: #fef4d6; stroke: #fbba00; stroke-width: 2; filter: url(#sh); }
+      .sk { fill: #fcf5e3; stroke: #e0a500; stroke-width: 1.5; filter: url(#sh); }
+      .pm { fill: #e6f4f2; stroke: #1f9d8b; stroke-width: 1.5; filter: url(#sh); }
+      .kp { fill: #eaf1fb; stroke: #3f7fd9; stroke-width: 1.5; filter: url(#sh); }
+      .fw { fill: #efefef; stroke: #6b6b69; stroke-width: 1.5; filter: url(#sh); }
+      .fg { fill: #f2eefa; stroke: #8a63d2; stroke-width: 1.5; filter: url(#sh); }
+      .err { fill: #fbebeb; stroke: #d64545; stroke-width: 1.5; filter: url(#sh); }
+      .thick { stroke-width: 2.25; }
+      .solid-ac { fill: #fbba00; }
+      .solid-sk { fill: #e0a500; }
+      .solid-pm { fill: #1f9d8b; }
+      .solid-kp { fill: #3f7fd9; }
+      .solid-fw { fill: #6b6b69; }
+      .solid-fg { fill: #8a63d2; }
+      .soft { fill: #f5f5f5; }
+      .ghost { fill: #f5f5f5; stroke: #bdbdbd; stroke-width: 1.25; stroke-dasharray: 4 3; }
+      .frame { fill: none; stroke: #bdbdbd; stroke-width: 1.5; stroke-dasharray: 6 5; }
+      .edge { fill: none; stroke: #757575; stroke-width: 1.75; }
+      .strong { stroke: #fbba00; stroke-width: 2.75; }
+      .dashed { stroke-dasharray: 6 4; }
+      .edge-fg { fill: none; stroke: #8a63d2; stroke-width: 1.75; stroke-dasharray: 6 4; }
+      .head { fill: #757575; }
+      .head-s { fill: #fbba00; }
+      .head-f { fill: #8a63d2; }
+      .icon { fill: none; stroke: #212121; stroke-width: 2.25; stroke-linecap: round; stroke-linejoin: round; }
+      .life { stroke: #bdbdbd; stroke-width: 1.5; stroke-dasharray: 4 4; }
+      .rule { stroke: #e0e0e0; stroke-width: 1; }
+    </style>
+  </defs>
+  <rect class="bg" width="960" height="500" rx="16"/>
+  <rect class="fg" x="60" y="20" width="220" height="50" rx="12"/>
+  <text class="n" x="170" y="41" text-anchor="middle">PublishInForeground</text>
+  <text class="sub" x="170" y="59" text-anchor="middle">the editor's request thread</text>
+  <rect class="ac" x="420" y="20" width="200" height="50" rx="12"/>
+  <text class="n" x="520" y="41" text-anchor="middle">PublishSchedule</text>
+  <text class="sub" x="520" y="59" text-anchor="middle">decides, under its lock</text>
+  <rect class="card" x="730" y="20" width="200" height="50" rx="12"/>
+  <text class="n" x="830" y="41" text-anchor="middle">ForegroundPublication</text>
+  <text class="sub" x="830" y="59" text-anchor="middle">the caller's code</text>
+  <line class="life" x1="170" y1="70" x2="170" y2="480"/>
+  <line class="life" x1="520" y1="70" x2="520" y2="480"/>
+  <line class="life" x1="830" y1="70" x2="830" y2="480"/>
+  <path class="edge" d="M170,100 H516" marker-end="url(#foreground-sequence-ah)"/>
+  <text class="label code" x="345" y="92" text-anchor="middle">openForeground(request)</text>
+  <path class="edge dashed" d="M520,128 H174" marker-end="url(#foreground-sequence-ah)"/>
+  <text class="label code" x="345" y="120" text-anchor="middle">list id</text>
+  <rect class="frame" x="40" y="146" width="900" height="270" rx="10" style="stroke:#8a63d2"/>
+  <path class="solid-fg" d="M40,156 a10,10 0 0 1 10,-10 H170 V160 l-8,8 H40 z"/>
+  <text class="label on" x="52" y="162">for each task</text>
+  <path class="edge" d="M170,190 H516" marker-end="url(#foreground-sequence-ah)"/>
+  <text class="label code" x="345" y="182" text-anchor="middle">enterForeground(task, list)</text>
+  <rect class="soft" x="300" y="202" width="440" height="62" rx="8"/>
+  <text class="sub" x="520" y="222" text-anchor="middle">waits while the entity is held or publishing is suspended,</text>
+  <text class="sub" x="520" y="240" text-anchor="middle">then holds it; takes over an identical waiting task,</text>
+  <text class="sub" x="520" y="258" text-anchor="middle">and the background runs fewer tasks meanwhile</text>
+  <path class="edge dashed" d="M520,285 H174" marker-end="url(#foreground-sequence-ah)"/>
+  <text class="label code" x="345" y="277" text-anchor="middle">entity is held</text>
+  <path class="edge" d="M170,320 H826" marker-end="url(#foreground-sequence-ah)"/>
+  <text class="label code" x="675" y="312" text-anchor="middle">publish(task)</text>
+  <path class="edge dashed" d="M830,350 H174" marker-end="url(#foreground-sequence-ah)"/>
+  <text class="label code" x="675" y="342" text-anchor="middle">ok / exception</text>
+  <path class="edge" d="M170,390 H516" marker-end="url(#foreground-sequence-ah)"/>
+  <text class="label code" x="345" y="382" text-anchor="middle">leaveForeground(key, ok)</text>
+  <path class="edge" d="M170,448 H516" marker-end="url(#foreground-sequence-ah)"/>
+  <text class="label code" x="345" y="440" text-anchor="middle">closeForeground(list)</text>
+  <text class="sub" x="345" y="470" text-anchor="middle">tasks never started count as cancelled</text>
+</svg>

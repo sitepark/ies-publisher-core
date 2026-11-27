@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540" role="img" aria-labelledby="background-sequence-title">
+  <title id="background-sequence-title">The dispatcher asks awaitNext for a task and hands it to a worker. The worker adopts the entity, lets the executor publish, and reports completed.</title>
+  <defs>
+    <marker id="background-sequence-ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path class="head" d="M0,0 L10,5 L0,10 z"/></marker>
+    <marker id="background-sequence-ahs" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path class="head-s" d="M0,0 L10,5 L0,10 z"/></marker>
+    <marker id="background-sequence-ahf" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path class="head-f" d="M0,0 L10,5 L0,10 z"/></marker>
+    <filter id="sh" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000000" flood-opacity="0.08"/>
+    </filter>
+    <style>
+      svg { font-family: Inter, Roboto, 'Helvetica Neue', 'DejaVu Sans', Arial, sans-serif; }
+      text { fill: #212121; font-size: 13px; }
+      .bg { fill: #ffffff; }
+      .t { font-size: 15px; font-weight: 700; }
+      .n { font-weight: 700; }
+      .sub { fill: #757575; font-size: 12px; }
+      .label { fill: #757575; font-size: 11.5px; font-weight: 600; }
+      .eyebrow { fill: #757575; font-size: 10.5px; font-weight: 700; letter-spacing: 0.08em; }
+      .code { font-family: 'JetBrains Mono', 'Roboto Mono', 'DejaVu Sans Mono', monospace; font-size: 12px; }
+      .big { font-size: 16px; font-weight: 700; }
+      .on { fill: #1d1d1b; }
+      .fgtext { fill: #6f4bb8; }
+      .card { fill: #ffffff; stroke: #bdbdbd; stroke-width: 1.25; filter: url(#sh); }
+      .ac { fill: #fef4d6; stroke: #fbba00; stroke-width: 2; filter: url(#sh); }
+      .sk { fill: #fcf5e3; stroke: #e0a500; stroke-width: 1.5; filter: url(#sh); }
+      .pm { fill: #e6f4f2; stroke: #1f9d8b; stroke-width: 1.5; filter: url(#sh); }
+      .kp { fill: #eaf1fb; stroke: #3f7fd9; stroke-width: 1.5; filter: url(#sh); }
+      .fw { fill: #efefef; stroke: #6b6b69; stroke-width: 1.5; filter: url(#sh); }
+      .fg { fill: #f2eefa; stroke: #8a63d2; stroke-width: 1.5; filter: url(#sh); }
+      .err { fill: #fbebeb; stroke: #d64545; stroke-width: 1.5; filter: url(#sh); }
+      .thick { stroke-width: 2.25; }
+      .solid-ac { fill: #fbba00; }
+      .solid-sk { fill: #e0a500; }
+      .solid-pm { fill: #1f9d8b; }
+      .solid-kp { fill: #3f7fd9; }
+      .solid-fw { fill: #6b6b69; }
+      .solid-fg { fill: #8a63d2; }
+      .soft { fill: #f5f5f5; }
+      .ghost { fill: #f5f5f5; stroke: #bdbdbd; stroke-width: 1.25; stroke-dasharray: 4 3; }
+      .frame { fill: none; stroke: #bdbdbd; stroke-width: 1.5; stroke-dasharray: 6 5; }
+      .edge { fill: none; stroke: #757575; stroke-width: 1.75; }
+      .strong { stroke: #fbba00; stroke-width: 2.75; }
+      .dashed { stroke-dasharray: 6 4; }
+      .edge-fg { fill: none; stroke: #8a63d2; stroke-width: 1.75; stroke-dasharray: 6 4; }
+      .head { fill: #757575; }
+      .head-s { fill: #fbba00; }
+      .head-f { fill: #8a63d2; }
+      .icon { fill: none; stroke: #212121; stroke-width: 2.25; stroke-linecap: round; stroke-linejoin: round; }
+      .life { stroke: #bdbdbd; stroke-width: 1.5; stroke-dasharray: 4 4; }
+      .rule { stroke: #e0e0e0; stroke-width: 1; }
+    </style>
+  </defs>
+  <rect class="bg" width="960" height="540" rx="16"/>
+  <rect class="card" x="20" y="20" width="200" height="50" rx="12"/>
+  <text class="n" x="120" y="41" text-anchor="middle">DispatchPublishTasks</text>
+  <text class="sub" x="120" y="59" text-anchor="middle">dispatcher thread</text>
+  <rect class="ac" x="280" y="20" width="200" height="50" rx="12"/>
+  <text class="n" x="380" y="41" text-anchor="middle">PublishSchedule</text>
+  <text class="sub" x="380" y="59" text-anchor="middle">decides, under its lock</text>
+  <rect class="card" x="540" y="20" width="200" height="50" rx="12"/>
+  <text class="n" x="640" y="41" text-anchor="middle">PublishWorkers</text>
+  <text class="sub" x="640" y="59" text-anchor="middle">worker thread (port)</text>
+  <rect class="card" x="770" y="20" width="180" height="50" rx="12"/>
+  <text class="n" x="860" y="41" text-anchor="middle">PublishTaskExecutor</text>
+  <text class="sub" x="860" y="59" text-anchor="middle">publishes (port)</text>
+  <line class="life" x1="120" y1="70" x2="120" y2="520"/>
+  <line class="life" x1="380" y1="70" x2="380" y2="520"/>
+  <line class="life" x1="640" y1="70" x2="640" y2="520"/>
+  <line class="life" x1="860" y1="70" x2="860" y2="520"/>
+  <path class="edge" d="M120,108 H376" marker-end="url(#background-sequence-ah)"/>
+  <text class="label code" x="250" y="100" text-anchor="middle">awaitNext(capacity)</text>
+  <rect class="soft" x="390" y="120" width="236" height="32" rx="8"/>
+  <text class="code" x="400" y="141">findRunnable() → start()</text>
+  <path class="edge dashed" d="M380,178 H124" marker-end="url(#background-sequence-ah)"/>
+  <text class="label code" x="250" y="170" text-anchor="middle">task 42</text>
+  <path class="edge" d="M120,215 H636" marker-end="url(#background-sequence-ah)"/>
+  <text class="label code" x="248" y="207" text-anchor="middle">submit(execute(task))</text>
+  <text class="sub" x="130" y="240">does not wait for the worker:</text>
+  <text class="sub" x="130" y="257">asks for the next task at once</text>
+  <path class="edge" d="M640,292 H384" marker-end="url(#background-sequence-ah)"/>
+  <text class="label code" x="510" y="284" text-anchor="middle">adopt(key)</text>
+  <text class="sub" x="510" y="309" text-anchor="middle">this thread owns the Hold</text>
+  <path class="edge" d="M640,344 H856" marker-end="url(#background-sequence-ah)"/>
+  <text class="label code" x="750" y="336" text-anchor="middle">execute(task)</text>
+  <path class="edge dashed" d="M860,380 H644" marker-end="url(#background-sequence-ah)"/>
+  <text class="label code" x="750" y="372" text-anchor="middle">DONE · RETRY · FAILED</text>
+  <path class="edge" d="M640,422 H384" marker-end="url(#background-sequence-ah)"/>
+  <text class="label code" x="510" y="414" text-anchor="middle">completed(task, outcome)</text>
+  <rect class="soft" x="240" y="440" width="280" height="56" rx="8"/>
+  <text class="sub" x="380" y="462" text-anchor="middle">releases the Hold, settles the lists</text>
+  <text class="sub" x="380" y="482" text-anchor="middle">or requeues the task · signalAll()</text>
+</svg>
