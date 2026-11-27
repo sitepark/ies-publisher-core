@@ -504,9 +504,10 @@ public class PublishSchedule {
   }
 
   /**
-   * Resumes publishing after {@link #suspend}. Meant to be called by the thread that suspended. A
-   * thread that did not suspend lifts the oldest suspension instead, so a suspension is not kept
-   * for good by a thread that is gone.
+   * Resumes publishing after {@link #suspend}. Must be called by the thread that suspended; it
+   * does nothing if publishing is not suspended.
+   *
+   * @throws IllegalStateException if publishing is suspended, but not by the calling thread
    */
   public void resume() {
     this.lock.lock();

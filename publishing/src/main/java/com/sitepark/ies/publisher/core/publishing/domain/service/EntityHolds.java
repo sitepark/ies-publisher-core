@@ -132,12 +132,13 @@ final class EntityHolds {
   }
 
   /**
-   * Lifts the suspension of the thread, or the oldest one if the thread did not suspend, so a
-   * suspension is not kept for good by a thread that is gone.
+   * Lifts the suspension of the thread. Does nothing if publishing is not suspended at all.
+   *
+   * @throws IllegalStateException if publishing is suspended, but not by the thread
    */
   void resume(Thread thread) {
     if (!this.suspenders.remove(thread) && !this.suspenders.isEmpty()) {
-      this.suspenders.remove(0);
+      throw new IllegalStateException("Publishing was not suspended by " + thread.getName());
     }
   }
 
