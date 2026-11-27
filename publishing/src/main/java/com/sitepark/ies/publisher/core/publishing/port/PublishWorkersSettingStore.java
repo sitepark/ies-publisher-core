@@ -6,7 +6,7 @@ import com.sitepark.ies.publisher.core.publishing.domain.value.PublishWorkersSet
 public interface PublishWorkersSettingStore {
 
   /**
-   * Returns the setting. A server nobody configured publishes with one worker.
+   * Returns the setting. A server nobody configured yields {@link PublishWorkersSetting#auto()}.
    *
    * @return the setting
    */
