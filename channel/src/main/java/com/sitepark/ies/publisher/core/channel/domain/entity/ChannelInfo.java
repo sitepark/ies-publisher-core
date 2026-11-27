@@ -1,5 +1,6 @@
 package com.sitepark.ies.publisher.core.channel.domain.entity;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
 import org.jspecify.annotations.Nullable;
 
@@ -11,6 +12,7 @@ import org.jspecify.annotations.Nullable;
  * @param description an optional, free-form description of the channel, or {@code null} if none is
  *     provided
  */
+@JsonDeserialize(builder = ChannelInfo.Builder.class)
 public record ChannelInfo(String id, String name, @Nullable String description) {
 
   /**

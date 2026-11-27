@@ -1,5 +1,6 @@
 package com.sitepark.ies.publisher.core.publishing.domain.value;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
 import com.sitepark.ies.publisher.core.publishing.domain.entity.PublishedUrlMapping;
 import java.util.List;
@@ -29,6 +30,7 @@ import java.util.Objects;
  * @param mappings the complete set of mappings for this owner/channel; must not be {@code null} but
  *     may be empty
  */
+@JsonDeserialize(builder = OwnerUrlMappings.Builder.class)
 public record OwnerUrlMappings(
     String ownerId, String channelId, List<PublishedUrlMapping> mappings) {
 
