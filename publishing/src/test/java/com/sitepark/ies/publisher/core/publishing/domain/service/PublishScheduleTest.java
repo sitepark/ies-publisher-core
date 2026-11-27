@@ -1,4 +1,4 @@
-package com.sitepark.ies.publisher.core.publishing.service;
+package com.sitepark.ies.publisher.core.publishing.domain.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -8,14 +8,18 @@ import com.sitepark.ies.publisher.core.publishing.domain.entity.PublishTask;
 import com.sitepark.ies.publisher.core.publishing.domain.value.PublishListId;
 import com.sitepark.ies.publisher.core.publishing.domain.value.PublishListOrigin;
 import com.sitepark.ies.publisher.core.publishing.domain.value.PublishListRequest;
+import com.sitepark.ies.publisher.core.publishing.domain.value.PublishListRetentionSetting;
 import com.sitepark.ies.publisher.core.publishing.domain.value.PublishOutcome;
 import com.sitepark.ies.publisher.core.publishing.domain.value.PublishPriority;
 import com.sitepark.ies.publisher.core.publishing.domain.value.PublishTaskKey;
 import com.sitepark.ies.publisher.core.publishing.domain.value.PublishTaskOptions;
 import com.sitepark.ies.publisher.core.publishing.domain.value.PublishTaskType;
-import com.sitepark.ies.publisher.core.publishing.port.PublishListRetention;
-import com.sitepark.ies.publisher.core.publishing.port.PublishingLimits;
+import com.sitepark.ies.publisher.core.publishing.domain.value.PublishingCapacity;
+import java.time.Clock;
 import java.time.Duration;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -35,9 +39,9 @@ import org.junit.jupiter.api.Timeout;
 })
 class PublishScheduleTest {
 
-  private static final PublishingLimits FOUR = new Limits(4, 1);
+  private static final PublishingCapacity FOUR = new PublishingCapacity(4, 1);
 
-  private static final PublishingLimits ONE = new Limits(1, 1);
+  private static final PublishingCapacity ONE = new PublishingCapacity(1, 1);
 
   private PublishSchedule schedule;
 
@@ -369,7 +373,7 @@ class PublishScheduleTest {
     this.schedule.enterForeground(publish("a"));
     this.urgent("a", "b");
 
-    assertThat(this.next(new Limits(4, 4)))
+    assertThat(this.next(new PublishingCapacity(4, 4)))
         .as("the entity in the foreground is skipped, not waited for")
         .isEqualTo("b");
   }
@@ -566,7 +570,7 @@ class PublishScheduleTest {
 
   @Test
   void keepsOnlyTheYoungestListsThatAreOver() {
-    this.schedule = new PublishSchedule(new Retention(2, Duration.ofHours(1)));
+    this.schedule.retain(new PublishListRetentionSetting(2, 1));
     this.urgent();
     PublishListId second = this.urgent();
     PublishListId third = this.urgent();
@@ -578,19 +582,61 @@ class PublishScheduleTest {
   }
 
   @Test
-  void forgetsAListOnceItIsOverForLongerThanTheLifetime() throws InterruptedException {
-    this.schedule = new PublishSchedule(new Retention(20, Duration.ofMillis(20)));
+  void keepsTheListsWithinTheLifetime() {
+    MovableClock clock = new MovableClock();
+    this.schedule = new PublishSchedule(clock);
+    this.schedule.retain(new PublishListRetentionSetting(20, 1));
+    PublishListId id = this.urgent();
+    clock.moveOn(Duration.ofMinutes(59));
+
+    assertThat(this.schedule.lists())
+        .as("a list over for less than the lifetime is kept")
+        .extracting(PublishList::id)
+        .containsExactly(id);
+  }
+
+  @Test
+  void aNewRetentionAppliesAtOnce() {
     this.urgent();
-    Thread.sleep(60);
+    PublishListId second = this.urgent();
+
+    this.schedule.retain(new PublishListRetentionSetting(1, 1));
+
+    assertThat(this.schedule.lists())
+        .as("the lists beyond the new setting are forgotten right away")
+        .extracting(PublishList::id)
+        .containsExactly(second);
+  }
+
+  @Test
+  void keepsTwentyListsUntilToldOtherwise() {
+    for (int i = 0; i < 21; i++) {
+      this.urgent();
+    }
+
+    assertThat(this.schedule.lists())
+        .as("a new schedule keeps as many lists as the default setting")
+        .hasSize(PublishListRetentionSetting.DEFAULT.keptLists());
+  }
+
+  @Test
+  void forgetsAListOnceItIsOverForLongerThanTheLifetime() {
+    MovableClock clock = new MovableClock();
+    this.schedule = new PublishSchedule(clock);
+    this.schedule.retain(new PublishListRetentionSetting(20, 1));
+    this.urgent();
+    clock.moveOn(Duration.ofHours(1));
 
     assertThat(this.schedule.lists()).as("the list is too old").isEmpty();
   }
 
   @Test
-  void doesNotFindAListThatIsOverForLongerThanTheLifetime() throws InterruptedException {
-    this.schedule = new PublishSchedule(new Retention(20, Duration.ofMillis(20)));
+  void doesNotFindAListThatIsOverForLongerThanTheLifetime() {
+    MovableClock clock = new MovableClock();
+    this.schedule = new PublishSchedule(clock);
+    this.schedule.retain(new PublishListRetentionSetting(20, 1));
     PublishListId id = this.urgent();
-    Thread.sleep(60);
+    clock.moveOn(Duration.ofHours(1));
 
     assertThat(this.schedule.list(id)).as("an expired list is not looked up any more").isEmpty();
     assertThatThrownBy(() -> this.schedule.await(id))
@@ -610,10 +656,12 @@ class PublishScheduleTest {
   }
 
   @Test
-  void keepsAListThatIsStillGoingOnWhateverItsAge() throws InterruptedException {
-    this.schedule = new PublishSchedule(new Retention(0, Duration.ofMillis(1)));
+  void keepsAListThatIsStillGoingOnWhateverItsAge() {
+    MovableClock clock = new MovableClock();
+    this.schedule = new PublishSchedule(clock);
+    this.schedule.retain(new PublishListRetentionSetting(0, 1));
     this.urgent("a");
-    Thread.sleep(20);
+    clock.moveOn(Duration.ofHours(2));
 
     assertThat(this.schedule.lists()).as("a list that is not over is no matter of age").hasSize(1);
   }
@@ -966,15 +1014,15 @@ class PublishScheduleTest {
   @Test
   void tellsOnceThatEverythingIsDone() throws InterruptedException {
     this.urgent("a");
-    this.schedule.completed(this.schedule.awaitNext(FOUR).orElseThrow(), PublishOutcome.DONE);
+    this.schedule.completed(this.schedule.awaitNext(() -> FOUR).orElseThrow(), PublishOutcome.DONE);
 
-    assertThat(this.schedule.awaitNext(FOUR)).as("nothing is left to do").isEmpty();
+    assertThat(this.schedule.awaitNext(() -> FOUR)).as("nothing is left to do").isEmpty();
 
     CompletableFuture<Optional<PublishTask>> again =
         CompletableFuture.supplyAsync(
             () -> {
               try {
-                return this.schedule.awaitNext(FOUR);
+                return this.schedule.awaitNext(() -> FOUR);
               } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 return Optional.empty();
@@ -1041,8 +1089,8 @@ class PublishScheduleTest {
 
   // --- helpers
 
-  private String next(PublishingLimits limits) {
-    return this.schedule.pollNext(limits).map(task -> task.key().entityId()).orElse("nothing");
+  private String next(PublishingCapacity capacity) {
+    return this.schedule.pollNext(capacity).map(task -> task.key().entityId()).orElse("nothing");
   }
 
   private PublishListId urgent(String... entities) {
@@ -1122,7 +1170,28 @@ class PublishScheduleTest {
     }
   }
 
-  private record Retention(int keptLists, Duration lifetime) implements PublishListRetention {}
+  /** A clock that stands still until it is moved on. */
+  private static final class MovableClock extends Clock {
 
-  private record Limits(int parallel, int parallelWhileInteractive) implements PublishingLimits {}
+    private Instant now = Instant.parse("2026-01-01T00:00:00Z");
+
+    private void moveOn(Duration duration) {
+      this.now = this.now.plus(duration);
+    }
+
+    @Override
+    public ZoneId getZone() {
+      return ZoneOffset.UTC;
+    }
+
+    @Override
+    public Clock withZone(ZoneId zone) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Instant instant() {
+      return this.now;
+    }
+  }
 }

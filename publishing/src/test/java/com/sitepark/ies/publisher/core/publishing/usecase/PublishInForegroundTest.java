@@ -6,13 +6,13 @@ import static org.assertj.core.api.Assertions.catchThrowable;
 
 import com.sitepark.ies.publisher.core.publishing.domain.entity.PublishList;
 import com.sitepark.ies.publisher.core.publishing.domain.entity.PublishTask;
+import com.sitepark.ies.publisher.core.publishing.domain.service.PublishSchedule;
 import com.sitepark.ies.publisher.core.publishing.domain.value.PublishListId;
 import com.sitepark.ies.publisher.core.publishing.domain.value.PublishListOrigin;
 import com.sitepark.ies.publisher.core.publishing.domain.value.PublishListRequest;
 import com.sitepark.ies.publisher.core.publishing.domain.value.PublishPriority;
 import com.sitepark.ies.publisher.core.publishing.domain.value.PublishTaskKey;
 import com.sitepark.ies.publisher.core.publishing.domain.value.PublishTaskType;
-import com.sitepark.ies.publisher.core.publishing.service.PublishSchedule;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
