@@ -11,6 +11,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -48,14 +49,17 @@ public record PublishedObjectFiles(
   /**
    * Validates the identifiers and that every file belongs to the entity in the channel.
    *
-   * @throws IllegalArgumentException if {@code channelId} or {@code entityId} is {@code null} or
-   *     blank, or a file belongs to another channel or entity
+   * @throws NullPointerException if {@code channelId} or {@code entityId} is {@code null}
+   * @throws IllegalArgumentException if {@code channelId} or {@code entityId} is blank, or a file
+   *     belongs to another channel or entity
    */
   public PublishedObjectFiles {
-    if (channelId == null || channelId.isBlank()) {
+    Objects.requireNonNull(channelId, "Channel ID must not be null or blank");
+    if (channelId.isBlank()) {
       throw new IllegalArgumentException("Channel ID must not be null or blank");
     }
-    if (entityId == null || entityId.isBlank()) {
+    Objects.requireNonNull(entityId, "Entity ID must not be null or blank");
+    if (entityId.isBlank()) {
       throw new IllegalArgumentException("Entity ID must not be null or blank");
     }
     files = List.copyOf(files);

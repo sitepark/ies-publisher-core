@@ -38,17 +38,22 @@ public record OwnerUrlMappings(
    * Validates the owner and channel identifiers, defensively copies the mapping list (which must
    * not be {@code null} but may be empty), and enforces that every contained mapping belongs to the
    * given owner and channel.
+   *
+   * @throws NullPointerException if {@code ownerId}, {@code channelId} or {@code mappings} is {@code
+   *     null}
+   * @throws IllegalArgumentException if {@code ownerId} or {@code channelId} is blank, or a mapping
+   *     belongs to another owner or channel
    */
   public OwnerUrlMappings {
-    if (ownerId == null || ownerId.isBlank()) {
+    Objects.requireNonNull(ownerId, "Owner ID must not be null or blank");
+    if (ownerId.isBlank()) {
       throw new IllegalArgumentException("Owner ID must not be null or blank");
     }
-    if (channelId == null || channelId.isBlank()) {
+    Objects.requireNonNull(channelId, "Channel ID must not be null or blank");
+    if (channelId.isBlank()) {
       throw new IllegalArgumentException("Channel ID must not be null or blank");
     }
-    if (mappings == null) {
-      throw new IllegalArgumentException("Mappings must not be null");
-    }
+    Objects.requireNonNull(mappings, "Mappings must not be null");
 
     // Defensive copy -> immutable value object
     mappings = List.copyOf(mappings);

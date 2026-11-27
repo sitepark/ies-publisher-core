@@ -41,22 +41,22 @@ class PublishedFileTest {
   @Test
   void buildWithNullKey_throwsException() {
     assertThatThrownBy(() -> base().key(null).build())
-        .as("null key should throw an IllegalArgumentException")
-        .isInstanceOf(IllegalArgumentException.class);
+        .as("null key should throw a NullPointerException")
+        .isInstanceOf(NullPointerException.class);
   }
 
   @Test
   void buildWithNullType_throwsException() {
     assertThatThrownBy(() -> base().type(null).build())
-        .as("null type should throw an IllegalArgumentException")
-        .isInstanceOf(IllegalArgumentException.class);
+        .as("null type should throw a NullPointerException")
+        .isInstanceOf(NullPointerException.class);
   }
 
   @Test
   void buildWithNullUrl_throwsException() {
     assertThatThrownBy(() -> base().url(null).build())
-        .as("null url should throw an IllegalArgumentException")
-        .isInstanceOf(IllegalArgumentException.class);
+        .as("null url should throw a NullPointerException")
+        .isInstanceOf(NullPointerException.class);
   }
 
   @Test
@@ -69,8 +69,8 @@ class PublishedFileTest {
   @Test
   void buildWithNullFile_throwsException() {
     assertThatThrownBy(() -> base().file(null).build())
-        .as("null file should throw an IllegalArgumentException")
-        .isInstanceOf(IllegalArgumentException.class);
+        .as("null file should throw a NullPointerException")
+        .isInstanceOf(NullPointerException.class);
   }
 
   @Test

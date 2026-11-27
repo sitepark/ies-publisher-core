@@ -267,7 +267,7 @@ class PublishedObjectFilesTest {
         .isInstanceOf(IllegalArgumentException.class);
     assertThatThrownBy(() -> new PublishedObjectFiles(CHANNEL, null, List.of()))
         .as("entity")
-        .isInstanceOf(IllegalArgumentException.class);
+        .isInstanceOf(NullPointerException.class);
   }
 
   @Test
@@ -302,7 +302,7 @@ class PublishedObjectFilesTest {
   void rejectsBlankIdentifiers() {
     assertThatThrownBy(() -> new PublishedObjectFiles(null, ENTITY, List.of()))
         .as("no channel")
-        .isInstanceOf(IllegalArgumentException.class);
+        .isInstanceOf(NullPointerException.class);
     assertThatThrownBy(() -> new PublishedObjectFiles(CHANNEL, " ", List.of()))
         .as("blank entity")
         .isInstanceOf(IllegalArgumentException.class);

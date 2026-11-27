@@ -2,6 +2,7 @@ package com.sitepark.ies.publisher.core.publishing.domain.value;
 
 import com.sitepark.ies.publisher.core.publishing.domain.entity.PublishedFileEntry;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * What to write so that the stored files of an entity in a channel become the ones its generation
@@ -31,14 +32,16 @@ public record PublishedObjectFilesChanges(
   /**
    * Validates the identifiers and copies the lists.
    *
-   * @throws IllegalArgumentException if {@code channelId} or {@code entityId} is {@code null} or
-   *     blank
+   * @throws NullPointerException if {@code channelId} or {@code entityId} is {@code null}
+   * @throws IllegalArgumentException if {@code channelId} or {@code entityId} is blank
    */
   public PublishedObjectFilesChanges {
-    if (channelId == null || channelId.isBlank()) {
+    Objects.requireNonNull(channelId, "Channel ID must not be null or blank");
+    if (channelId.isBlank()) {
       throw new IllegalArgumentException("Channel ID must not be null or blank");
     }
-    if (entityId == null || entityId.isBlank()) {
+    Objects.requireNonNull(entityId, "Entity ID must not be null or blank");
+    if (entityId.isBlank()) {
       throw new IllegalArgumentException("Entity ID must not be null or blank");
     }
     inserts = List.copyOf(inserts);

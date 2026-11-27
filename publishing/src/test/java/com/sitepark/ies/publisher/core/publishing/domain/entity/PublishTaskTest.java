@@ -45,7 +45,7 @@ class PublishTaskTest {
   @Test
   void nullKey_throwsException() {
     assertThatThrownBy(() -> PublishTask.of(null, PublishTaskType.PUBLISH))
-        .as("null key should throw an IllegalArgumentException")
-        .isInstanceOf(IllegalArgumentException.class);
+        .as("null key should throw a NullPointerException")
+        .isInstanceOf(NullPointerException.class);
   }
 }

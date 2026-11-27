@@ -1,5 +1,7 @@
 package com.sitepark.ies.publisher.core.publishing.domain.value;
 
+import java.util.Objects;
+
 /**
  * The place a file takes in a channel. Two files of the same type cannot take the same place: the
  * one published last claims it.
@@ -13,14 +15,13 @@ public record PublishedFilePath(PublishedFileType type, String file) {
   /**
    * Validates that type and path are present.
    *
-   * @throws IllegalArgumentException if {@code type} is {@code null} or {@code file} is {@code
-   *     null} or blank
+   * @throws NullPointerException if {@code type} or {@code file} is {@code null}
+   * @throws IllegalArgumentException if {@code file} is blank
    */
   public PublishedFilePath {
-    if (type == null) {
-      throw new IllegalArgumentException("Type must not be null");
-    }
-    if (file == null || file.isBlank()) {
+    Objects.requireNonNull(type, "Type must not be null");
+    Objects.requireNonNull(file, "File must not be null or blank");
+    if (file.isBlank()) {
       throw new IllegalArgumentException("File must not be null or blank");
     }
   }

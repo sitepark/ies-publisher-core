@@ -1,5 +1,6 @@
 package com.sitepark.ies.publisher.core.publishing.domain.value;
 
+import java.util.Objects;
 import org.jspecify.annotations.Nullable;
 
 /**
@@ -23,13 +24,12 @@ public record PublishWorkersSetting(Mode mode, @Nullable Integer workers) {
    * Validates that a given number is present and at least 1, and that no number comes with a
    * setting that is worked out.
    *
-   * @throws IllegalArgumentException if {@code mode} is {@code null}, a fixed setting has no number
-   *     or one below 1, or an automatic setting has a number
+   * @throws NullPointerException if {@code mode} is {@code null}
+   * @throws IllegalArgumentException if a fixed setting has no number or one below 1, or an
+   *     automatic setting has a number
    */
   public PublishWorkersSetting {
-    if (mode == null) {
-      throw new IllegalArgumentException("Mode must not be null");
-    }
+    Objects.requireNonNull(mode, "Mode must not be null");
     if (mode == Mode.FIXED && (workers == null || workers < 1)) {
       throw new IllegalArgumentException("A fixed setting needs at least one worker");
     }

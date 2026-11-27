@@ -37,23 +37,28 @@ public record PublishedUrlMapping(
 
   /**
    * Validates that all required fields are present and non-blank and that the mapping mode is set.
+   *
+   * @throws NullPointerException if a required field or the mode is {@code null}
+   * @throws IllegalArgumentException if an identifier or the path is blank
    */
   public PublishedUrlMapping {
-    if (siteId == null || siteId.isBlank()) {
+    Objects.requireNonNull(siteId, "Site ID must not be null or blank");
+    if (siteId.isBlank()) {
       throw new IllegalArgumentException("Site ID must not be null or blank");
     }
-    if (channelId == null || channelId.isBlank()) {
+    Objects.requireNonNull(channelId, "Channel ID must not be null or blank");
+    if (channelId.isBlank()) {
       throw new IllegalArgumentException("Channel ID must not be null or blank");
     }
-    if (path == null || path.isBlank()) {
+    Objects.requireNonNull(path, "Path must not be null or blank");
+    if (path.isBlank()) {
       throw new IllegalArgumentException("Path must not be null or blank");
     }
-    if (ownerId == null || ownerId.isBlank()) {
+    Objects.requireNonNull(ownerId, "Owner ID must not be null or blank");
+    if (ownerId.isBlank()) {
       throw new IllegalArgumentException("Owner ID must not be null or blank");
     }
-    if (mode == null) {
-      throw new IllegalArgumentException("Mapping mode must not be null");
-    }
+    Objects.requireNonNull(mode, "Mapping mode must not be null");
   }
 
   /**
